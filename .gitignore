@@ -1,0 +1,137 @@
+# ------------------------------------------------------------
+# Operating system files
+# ------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------
+# IDE / editor files
+# ------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*.tmp
+*.bak
+
+# ------------------------------------------------------------
+# Logs
+# ------------------------------------------------------------
+*.log
+logs/*.log
+tmp/logs/*.log
+
+# ------------------------------------------------------------
+# CakePHP temporary and cache files
+# ------------------------------------------------------------
+tmp/*
+!tmp/.gitignore
+!tmp/cache/
+tmp/cache/*
+!tmp/cache/.gitignore
+!tmp/cache/models/
+!tmp/cache/models/.gitignore
+!tmp/cache/persistent/
+!tmp/cache/persistent/.gitignore
+!tmp/cache/views/
+!tmp/cache/views/.gitignore
+!tmp/sessions/
+!tmp/sessions/.gitignore
+!tmp/tests/
+!tmp/tests/.gitignore
+
+# ------------------------------------------------------------
+# Uploaded / generated runtime files
+# ------------------------------------------------------------
+storage/*
+!storage/.gitignore
+
+webroot/files/*
+!webroot/files/.gitignore
+
+webroot/uploads/*
+!webroot/uploads/.gitignore
+
+webroot/img/uploads/*
+!webroot/img/uploads/.gitignore
+
+# ------------------------------------------------------------
+# Composer
+# ------------------------------------------------------------
+vendor/
+composer.phar
+
+# ------------------------------------------------------------
+# PHPUnit / test artifacts
+# ------------------------------------------------------------
+.phpunit.cache/
+coverage/
+coverage.xml
+clover.xml
+junit.xml
+
+# ------------------------------------------------------------
+# Build / release artifacts
+# ------------------------------------------------------------
+dist/
+build/
+release/
+artifacts/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ------------------------------------------------------------
+# Environment / local configuration
+# Keep config/app_local.php in repo if you ship a safe template
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+config/app_local_*.php
+config/.env
+
+# ------------------------------------------------------------
+# Secrets / certificates / keys
+# ------------------------------------------------------------
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.csr
+secrets/
+certs/
+keys/
+
+# ------------------------------------------------------------
+# SQLite / local databases
+# ------------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+
+# ------------------------------------------------------------
+# Node / frontend build cache
+# Keep lockfiles versioned for reproducible builds
+# ------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ------------------------------------------------------------
+# Optional generated documentation output
+# Keep source docs, ignore generated site output
+# ------------------------------------------------------------
+_site/
+site/
+docs/_site/
+docs/site/
+_docfx_site/

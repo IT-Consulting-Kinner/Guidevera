@@ -1,0 +1,215 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release, for example v1.2.3'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, mbstring, pdo_sqlite, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache/files
+            vendor
+          key: ${{ runner.os }}-release-php-8.3-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-php-8.3-composer-
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dev dependencies for verification
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: PHP syntax check
+        run: |
+          git ls-files '*.php' ':!:vendor/*' | xargs -r -n 50 php -l
+
+      - name: Coding standards
+        run: composer cs-check
+
+      - name: PHPUnit
+        env:
+          APP_FULL_BASE_URL: http://localhost
+          SECURITY_SALT: ci-temporary-salt-change-me
+          DEBUG: false
+        run: composer test
+
+      - name: Reinstall production dependencies
+        run: |
+          rm -rf vendor
+          composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Build production assets
+        run: bash bin/build.sh
+
+      - name: Create distributable package
+        id: package
+        run: |
+          set -euo pipefail
+
+          APP_SLUG="${GITHUB_REPOSITORY#*/}"
+          PACKAGE_NAME="${APP_SLUG}-${RELEASE_TAG}-dist"
+
+          rm -rf dist
+          mkdir -p "dist/package"
+
+          rsync -a ./ dist/package/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'tests/' \
+            --exclude 'docs/' \
+            --exclude '.phpunit.cache/' \
+            --exclude '.gitignore' \
+            --exclude '.gitattributes' \
+            --exclude '.editorconfig' \
+            --exclude 'phpunit.xml.dist'
+
+          echo "${RELEASE_TAG}" > "dist/package/VERSION"
+
+          (
+            cd dist/package
+            zip -r "../${PACKAGE_NAME}.zip" .
+          )
+
+          sha256sum "dist/${PACKAGE_NAME}.zip" > "dist/${PACKAGE_NAME}.sha256"
+
+          echo "zip_path=dist/${PACKAGE_NAME}.zip" >> "$GITHUB_OUTPUT"
+          echo "sha_path=dist/${PACKAGE_NAME}.sha256" >> "$GITHUB_OUTPUT"
+          echo "package_name=${PACKAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or reuse GitHub release
+        id: release_meta
+        uses: actions/github-script@v7
+        env:
+          TAG_NAME: ${{ env.RELEASE_TAG }}
+        with:
+          script: |
+            const tag = process.env.TAG_NAME;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let release;
+
+            try {
+              release = await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag,
+              });
+              core.info(`Using existing release for ${tag}`);
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+
+              release = await github.rest.repos.createRelease({
+                owner,
+                repo,
+                tag_name: tag,
+                name: tag,
+                draft: false,
+                prerelease: tag.includes('-'),
+                generate_release_notes: true,
+              });
+
+              core.info(`Created release for ${tag}`);
+            }
+
+            core.setOutput('release_id', String(release.data.id));
+
+      - name: Upload release assets
+        uses: actions/github-script@v7
+        env:
+          RELEASE_ID: ${{ steps.release_meta.outputs.release_id }}
+          ZIP_PATH: ${{ steps.package.outputs.zip_path }}
+          SHA_PATH: ${{ steps.package.outputs.sha_path }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const release_id = Number(process.env.RELEASE_ID);
+
+            const assets = [
+              { file: process.env.ZIP_PATH, type: 'application/zip' },
+              { file: process.env.SHA_PATH, type: 'text/plain' },
+            ];
+
+            const existingAssets = await github.paginate(
+              github.rest.repos.listReleaseAssets,
+              {
+                owner,
+                repo,
+                release_id,
+                per_page: 100,
+              }
+            );
+
+            for (const asset of assets) {
+              const assetName = path.basename(asset.file);
+              const existing = existingAssets.find((x) => x.name === assetName);
+
+              if (existing) {
+                await github.rest.repos.deleteReleaseAsset({
+                  owner,
+                  repo,
+                  asset_id: existing.id,
+                });
+                core.info(`Deleted existing asset ${assetName}`);
+              }
+
+              const data = fs.readFileSync(asset.file);
+
+              await github.rest.repos.uploadReleaseAsset({
+                owner,
+                repo,
+                release_id,
+                name: assetName,
+                data,
+                headers: {
+                  'content-type': asset.type,
+                  'content-length': data.length,
+                },
+              });
+
+              core.info(`Uploaded ${assetName}`);
+            }

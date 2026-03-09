@@ -1,0 +1,32 @@
+- name: Introduction
+  href: index.md
+- name: Architecture
+  href: architecture.md
+- name: Installation
+  href: installation.md
+- name: Configuration
+  href: configuration.md
+- name: API Reference
+  href: api/
+  items:
+    - name: Controllers
+      href: api/controllers.md
+    - name: Services
+      href: api/services.md
+    - name: Models
+      href: api/models.md
+    - name: Middleware
+      href: api/middleware.md
+- name: Frontend
+  href: frontend/
+  items:
+    - name: JavaScript (pages.js)
+      href: frontend/javascript.md
+    - name: CSS Architecture
+      href: frontend/css.md
+    - name: Templates
+      href: frontend/templates.md
+- name: Security
+  href: security.md
+- name: Database Schema
+  href: database.md

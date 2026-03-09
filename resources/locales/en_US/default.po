@@ -1,0 +1,425 @@
+# English translations for AppProfileSafe
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Browse files and pages"
+msgstr ""
+
+msgid "Files"
+msgstr ""
+
+msgid "Pages"
+msgstr ""
+
+msgid "Select file or page"
+msgstr ""
+
+msgid "Do you really want to delete this file?"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Downloads"
+msgstr ""
+
+msgid "Drag files onto the list to upload them."
+msgstr ""
+
+msgid "Could not delete the file."
+msgstr ""
+
+msgid "Filenames starting with a dot are not allowed."
+msgstr ""
+
+msgid "Could not load data."
+msgstr ""
+
+msgid "Upload failed."
+msgstr ""
+
+msgid "File deleted."
+msgstr ""
+
+msgid "File uploaded."
+msgstr ""
+
+msgid "Filename"
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "Manage files"
+msgstr ""
+
+msgid "No files available. Drag files here to upload."
+msgstr ""
+
+msgid "No files available."
+msgstr ""
+
+msgid "No active pages available."
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Views"
+msgstr ""
+
+msgid "Please exit the edit mode first."
+msgstr ""
+
+msgid "Unsaved changes will be lost. Do you really want to exit the edit mode?"
+msgstr ""
+
+msgid "Modified"
+msgstr ""
+
+msgid "&raquo; close all &laquo;"
+msgstr ""
+
+msgid "Do you really want to delete the page?"
+msgstr ""
+
+msgid "Content"
+msgstr ""
+
+msgid "Copy link"
+msgstr ""
+
+msgid "Create new page"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Release date"
+msgstr ""
+
+msgid "Delete page"
+msgstr ""
+
+msgid "Description (for search engines)"
+msgstr ""
+
+msgid "Edit page"
+msgstr ""
+
+msgid "Error loading the main page! Please try again later."
+msgstr ""
+
+msgid "Error loading the index!"
+msgstr ""
+
+msgid "The page cannot be loaded!"
+msgstr ""
+
+msgid "Error loading search results!"
+msgstr ""
+
+msgid "Error loading the directory tree!"
+msgstr ""
+
+msgid "Error creating the page!"
+msgstr ""
+
+msgid "Error deleting the page!"
+msgstr ""
+
+msgid "Error loading page for editing! It may no longer be available."
+msgstr ""
+
+msgid "The page cannot be deleted because it contains sub-pages!"
+msgstr ""
+
+msgid "Error saving the page!"
+msgstr ""
+
+msgid "Error loading the page! It may no longer be available. The main page is loading."
+msgstr ""
+
+msgid "Error setting the status!"
+msgstr ""
+
+msgid "Error while saving the folder status!"
+msgstr ""
+
+msgid "Error saving page position!"
+msgstr ""
+
+msgid "Exit edit mode"
+msgstr ""
+
+msgid "&raquo; expand all &laquo;"
+msgstr ""
+
+msgid "Index"
+msgstr ""
+
+msgid "Insert page"
+msgstr ""
+
+msgid "Keywords (for indexing)"
+msgstr ""
+
+msgid "Last update"
+msgstr ""
+
+msgid "Manage pages"
+msgstr ""
+
+msgid "New page"
+msgstr ""
+
+msgid "[New page]"
+msgstr ""
+
+msgid "No keywords were found."
+msgstr ""
+
+msgid "No pages"
+msgstr ""
+
+msgid "No pages were found."
+msgstr ""
+
+msgid "The page has been deleted."
+msgstr ""
+
+msgid "This page is not published."
+msgstr ""
+
+msgid "The page has been published."
+msgstr ""
+
+msgid "The page has been saved."
+msgstr ""
+
+msgid "The page has been unpublished."
+msgstr ""
+
+msgid "Pages"
+msgstr ""
+
+msgid "Enter a brief description of the paragraph here."
+msgstr ""
+
+msgid "Enter the keywords here for the paragraph via which it should be accessible in the index (example: create, sentence, do-it-yourself)."
+msgstr ""
+
+msgid "Print book"
+msgstr ""
+
+msgid "Print page"
+msgstr ""
+
+msgid "Publish page"
+msgstr ""
+
+msgid "Save page"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Unpublish page"
+msgstr ""
+
+msgid "search"
+msgstr ""
+
+msgid "Content"
+msgstr ""
+
+msgid "Exit edit mode"
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Unsaved changes will be lost. Do you really want to quit editing?"
+msgstr ""
+
+msgid "Change password"
+msgstr ""
+
+msgid "The change has been saved."
+msgstr ""
+
+msgid "Are you sure you want to delete the user?"
+msgstr ""
+
+msgid "Confirm password"
+msgstr ""
+
+msgid "Create user"
+msgstr ""
+
+msgid "Delete user"
+msgstr ""
+
+msgid "Edit profile"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Please check all fields."
+msgstr ""
+
+msgid "Error deleting the user!"
+msgstr ""
+
+msgid "A user with this username or email already exists."
+msgstr ""
+
+msgid "Please fill in all fields."
+msgstr ""
+
+msgid "You could not be logged in. <br/> Please check your details and try again."
+msgstr ""
+
+msgid "Password and password confirmation must match."
+msgstr ""
+
+msgid "Error saving change!"
+msgstr ""
+
+msgid "Too many failed login attempts. Please try again in a few minutes."
+msgstr ""
+
+msgid "The user could not be created!"
+msgstr ""
+
+msgid "First login"
+msgstr ""
+
+msgid "Login"
+msgstr ""
+
+msgid "Logout user"
+msgstr ""
+
+msgid "Manage users"
+msgstr ""
+
+msgid "Change user"
+msgstr ""
+
+msgid "Mr"
+msgstr ""
+
+msgid "Ms"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "New password"
+msgstr ""
+
+msgid "Verify new password"
+msgstr ""
+
+msgid "Current password"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Roles"
+msgstr ""
+
+msgid "Admin"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "Salutation"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "active"
+msgstr ""
+
+msgid "inactive"
+msgstr ""
+
+msgid "Your password has been changed."
+msgstr ""
+
+msgid "Your user data has been updated."
+msgstr ""
+
+msgid "The user was deleted."
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "cancel"
+msgstr ""
+
+msgid "login"
+msgstr ""
+
+msgid "Unsaved changes will be lost. Do you really want to quit editing?"
+msgstr ""
+
+msgid "reload"
+msgstr ""
+
+msgid "You could not be logged in. Please check your details and try again."
+msgstr "You could not be logged in. Please check your details and try again."
+
+msgid "close all"
+msgstr "close all"
+
+msgid "expand all"
+msgstr "expand all"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Comma-separated keywords"
+msgstr "Comma-separated keywords"
+
+msgid "Short description for search engines"
+msgstr "Short description for search engines"
+
+msgid "No file selected"
+msgstr "No file selected"
+
+msgid "Please save or close the editor first."
+msgstr "Please save or close the editor first."
+
+msgid "Initial setup"
+msgstr "Initial setup"
+
+msgid "You will be asked to change this password after login."
+msgstr "You will be asked to change this password after login."
+
+msgid "You must change your password before continuing."
+msgstr "You must change your password before continuing."
+
+msgid "User data saved."
+msgstr "User data saved."
+
+msgid "Back"
+msgstr "Back"
+
+msgid "Table of Contents"
+msgstr "Table of Contents"

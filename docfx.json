@@ -1,0 +1,18 @@
+{
+  "metadata": [],
+  "build": {
+    "content": [
+      {
+        "files": ["**/*.md", "**/toc.yml"],
+        "src": "docs"
+      }
+    ],
+    "dest": "_site",
+    "template": ["default"],
+    "globalMetadata": {
+      "_appTitle": "AppProfileSafe Manual — Developer Documentation",
+      "_appFooter": "Built with DocFX",
+      "_enableSearch": true
+    }
+  }
+}

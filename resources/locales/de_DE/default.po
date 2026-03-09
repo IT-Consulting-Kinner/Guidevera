@@ -1,0 +1,608 @@
+# German translations for AppProfileSafe
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Browse files and pages"
+msgstr "Dateien und Seiten durchsuchen"
+
+msgid "Files"
+msgstr "Dateien"
+
+msgid "Pages"
+msgstr "Seiten"
+
+msgid "Select file or page"
+msgstr "Datei oder Seite auswählen"
+
+msgid "Do you really want to delete this file?"
+msgstr "Möchten Sie diese Datei wirklich löschen?"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Downloads"
+msgstr "Downloads"
+
+msgid "Drag files onto the list to upload them."
+msgstr "Dateien auf die Liste ziehen, um sie hochzuladen."
+
+msgid "Could not delete the file."
+msgstr "Die Datei konnte nicht gelöscht werden."
+
+msgid "Filenames starting with a dot are not allowed."
+msgstr "Dateinamen die mit einem Punkt beginnen sind nicht erlaubt."
+
+msgid "Could not load data."
+msgstr "Daten konnten nicht geladen werden."
+
+msgid "Upload failed."
+msgstr "Upload fehlgeschlagen."
+
+msgid "File deleted."
+msgstr "Datei gelöscht."
+
+msgid "File uploaded."
+msgstr "Datei hochgeladen."
+
+msgid "Filename"
+msgstr "Dateiname"
+
+msgid "Loading..."
+msgstr "Laden..."
+
+msgid "Manage files"
+msgstr "Dateien verwalten"
+
+msgid "No files available. Drag files here to upload."
+msgstr "Keine Dateien vorhanden. Dateien hierher ziehen zum Hochladen."
+
+msgid "No files available."
+msgstr "Keine Dateien vorhanden."
+
+msgid "No active pages available."
+msgstr "Keine aktiven Seiten vorhanden."
+
+msgid "Size"
+msgstr "Größe"
+
+msgid "Views"
+msgstr "Aufrufe"
+
+msgid "Please exit the edit mode first."
+msgstr "Bitte verlassen Sie zuerst den Bearbeitungsmodus."
+
+msgid "Unsaved changes will be lost. Do you really want to exit the edit mode?"
+msgstr "Nicht gespeicherte Änderungen gehen verloren. Wollen Sie die Bearbeitung wirklich verlassen?"
+
+msgid "Modified"
+msgstr "Geändert"
+
+msgid "&raquo; close all &laquo;"
+msgstr "&raquo; alle zuklappen &laquo;"
+
+msgid "Do you really want to delete the page?"
+msgstr "Wollen Sie die Seite wirklich löschen?"
+
+msgid "Content"
+msgstr "Inhalt"
+
+msgid "Copy link"
+msgstr "Link kopieren"
+
+msgid "Create new page"
+msgstr "Neue Seite erstellen"
+
+msgid "Created"
+msgstr "Erstellt"
+
+msgid "Release date"
+msgstr "Veröffentlichungsdatum"
+
+msgid "Delete page"
+msgstr "Seite löschen"
+
+msgid "Description (for search engines)"
+msgstr "Beschreibung (für Suchmaschinen)"
+
+msgid "Edit page"
+msgstr "Seite bearbeiten"
+
+msgid "Error loading the main page! Please try again later."
+msgstr "Fehler beim Laden der Hauptseite! Bitte versuchen Sie es später noch einmal."
+
+msgid "Error loading the index!"
+msgstr "Fehler beim Laden des Indexes!"
+
+msgid "The page cannot be loaded!"
+msgstr "Die Seite kann nicht geladen werden!"
+
+msgid "Error loading search results!"
+msgstr "Fehler beim Laden der Suchergebnisse!"
+
+msgid "Error loading the directory tree!"
+msgstr "Fehler beim Laden des Verzeichnisbaumes!"
+
+msgid "Error creating the page!"
+msgstr "Fehler beim Erstellen der Seite!"
+
+msgid "Error deleting the page!"
+msgstr "Fehler beim Löschen der Seite!"
+
+msgid "Error loading page for editing! It may no longer be available."
+msgstr "Fehler beim Laden der Seite für die Bearbeitung! Möglicherweise ist diese nicht mehr verfügbar."
+
+msgid "The page cannot be deleted because it contains sub-pages!"
+msgstr "Die Seite kann nicht gelöscht werden, da sie Unterseiten enthält!"
+
+msgid "Error saving the page!"
+msgstr "Fehler beim Speichern der Seite!"
+
+msgid "Error loading the page! It may no longer be available. The main page is loading."
+msgstr "Fehler beim Laden der Seite! Möglicherweise ist diese nicht mehr verfügbar. Die Hauptseite wird geladen."
+
+msgid "Error setting the status!"
+msgstr "Fehler beim Setzen des Status!"
+
+msgid "Error while saving the folder status!"
+msgstr "Fehler beim Speichern des Ordner Status!"
+
+msgid "Error saving page position!"
+msgstr "Fehler beim Speichern der Position im Verzeichnisbaum!"
+
+msgid "Exit edit mode"
+msgstr "Bearbeitungsmodus verlassen"
+
+msgid "&raquo; expand all &laquo;"
+msgstr "&raquo; alle aufklappen &laquo;"
+
+msgid "Index"
+msgstr "Index"
+
+msgid "Insert page"
+msgstr "Seite einfügen"
+
+msgid "Keywords (for indexing)"
+msgstr "Keywords (für die Indexierung)"
+
+msgid "Last update"
+msgstr "Letzte Aktualisierung"
+
+msgid "Manage pages"
+msgstr "Seiten verwalten"
+
+msgid "New page"
+msgstr ""
+
+msgid "[New page]"
+msgstr "[Neue Seite]"
+
+msgid "No keywords were found."
+msgstr "Es wurden keine Keywords gefunden."
+
+msgid "No pages"
+msgstr "Keine Seiten"
+
+msgid "No pages were found."
+msgstr "Es wurden keine Seiten gefunden."
+
+msgid "The page has been deleted."
+msgstr "Die Seite wurde gelöscht."
+
+msgid "This page is not published."
+msgstr "Diese Seite ist nicht freigegeben."
+
+msgid "The page has been published."
+msgstr "Die Seite wurde veröffentlicht."
+
+msgid "The page has been saved."
+msgstr "Die Seite wurde gespeichert."
+
+msgid "The page has been unpublished."
+msgstr "Die Seite wurde verborgen."
+
+msgid "Pages"
+msgstr "Seiten"
+
+msgid "Enter a brief description of the paragraph here."
+msgstr "Geben Sie hier eine kurze Beschreibung des Absatzes ein."
+
+msgid "Enter the keywords here for the paragraph via which it should be accessible in the index (example: create, sentence, do-it-yourself)."
+msgstr "Geben Sie hier Keywords für den Absatzes ein, über welche dieser im Index erreichbar sein soll (Beispiel: erstellen, Satz, Heimwerken)."
+
+msgid "Print book"
+msgstr "Handbuch drucken"
+
+msgid "Print page"
+msgstr "Seite drucken"
+
+msgid "Publish page"
+msgstr "Seite veröffentlichen"
+
+msgid "Save page"
+msgstr "Seite speichern"
+
+msgid "Search"
+msgstr "Suche"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Unpublish page"
+msgstr "Seite verbergen"
+
+msgid "search"
+msgstr "suchen"
+
+msgid "Content"
+msgstr "Inhalt"
+
+msgid "Exit edit mode"
+msgstr "Bearbeitungsmodus verlassen"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Unsaved changes will be lost. Do you really want to quit editing?"
+msgstr "Nicht gespeicherte Änderungen gehen verloren. Wollen Sie die Bearbeitung wirklich verlassen?"
+
+msgid "Change password"
+msgstr "Passwort ändern"
+
+msgid "The change has been saved."
+msgstr "Die Änderung wurde gespeichert."
+
+msgid "Are you sure you want to delete the user?"
+msgstr "Möchten Sie den Benutzer wirklich löschen?"
+
+msgid "Confirm password"
+msgstr "Passwort bestätigen"
+
+msgid "Create user"
+msgstr "Benutzer erstellen"
+
+msgid "Delete user"
+msgstr "Benutzer löschen"
+
+msgid "Edit profile"
+msgstr "Profil bearbeiten"
+
+msgid "Email"
+msgstr "E-Mail"
+
+msgid "Please check all fields."
+msgstr "Bitte prüfen Sie alle Felder."
+
+msgid "Error deleting the user!"
+msgstr "Fehler beim Löschen des Benutzers!"
+
+msgid "A user with this username or email already exists."
+msgstr "Ein Benutzer mit dem Benutzernamen bzw. mit der E-Mail existiert schon."
+
+msgid "Please fill in all fields."
+msgstr "Bitte füllen Sie alle Felder aus."
+
+msgid "You could not be logged in. <br/> Please check your details and try again."
+msgstr "Sie konnten nicht angemeldet werden.<br/>Bitte überprüfen Sie Ihre Daten und versuchen Sie es erneut."
+
+msgid "Password and password confirmation must match."
+msgstr "Passwort und Passwortbestätigung müssen identisch sein."
+
+msgid "Error saving change!"
+msgstr "Fehler beim Speichern der Änderung!"
+
+msgid "Too many failed login attempts. Please try again in a few minutes."
+msgstr "Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es in einigen Minuten erneut."
+
+msgid "The user could not be created!"
+msgstr "Der Benutzer konnte nicht erstellt werden!"
+
+msgid "First login"
+msgstr "Erstanmeldung"
+
+msgid "Login"
+msgstr "Einloggen"
+
+msgid "Logout user"
+msgstr "Benutzer abmelden"
+
+msgid "Manage users"
+msgstr "Benutzer verwalten"
+
+msgid "Change user"
+msgstr "Benutzer ändern"
+
+msgid "Mr"
+msgstr "Herr"
+
+msgid "Ms"
+msgstr "Frau"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "New password"
+msgstr "Neues Passwort"
+
+msgid "Verify new password"
+msgstr "Neues Passwort bestätigen"
+
+msgid "Current password"
+msgstr "Bisheriges Passwort"
+
+msgid "Password"
+msgstr "Passwort"
+
+msgid "Roles"
+msgstr "Rolle"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "User"
+msgstr "Benutzer"
+
+msgid "Salutation"
+msgstr "Anrede"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "active"
+msgstr "aktiv"
+
+msgid "inactive"
+msgstr "inaktiv"
+
+msgid "Your password has been changed."
+msgstr "Ihr Passwort wurde geändert."
+
+msgid "Your user data has been updated."
+msgstr "Ihre Benutzerdaten wurden geändert."
+
+msgid "The user was deleted."
+msgstr "Der Benutzer wurde gelöscht."
+
+msgid "Username"
+msgstr "Benutzername"
+
+msgid "cancel"
+msgstr "abbrechen"
+
+msgid "login"
+msgstr "einloggen"
+
+msgid "Unsaved changes will be lost. Do you really want to quit editing?"
+msgstr "Nicht gespeicherte Änderungen gehen verloren. Wollen Sie die Bearbeitung wirklich verlassen?"
+
+msgid "reload"
+msgstr "neu laden"
+
+msgid "You could not be logged in. Please check your details and try again."
+msgstr "Die Anmeldung ist fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut."
+
+msgid "close all"
+msgstr "Alle schließen"
+
+msgid "expand all"
+msgstr "Alle aufklappen"
+
+msgid "Actions"
+msgstr "Aktionen"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Comma-separated keywords"
+msgstr "Kommagetrennte Schlüsselwörter"
+
+msgid "Short description for search engines"
+msgstr "Kurzbeschreibung für Suchmaschinen"
+
+msgid "No file selected"
+msgstr "Keine Datei ausgewählt"
+
+msgid "Please save or close the editor first."
+msgstr "Bitte speichern oder schließen Sie zuerst den Editor."
+
+msgid "Initial setup"
+msgstr "Ersteinrichtung"
+
+msgid "You will be asked to change this password after login."
+msgstr "Sie werden nach dem Login aufgefordert, dieses Passwort zu ändern."
+
+msgid "You must change your password before continuing."
+msgstr "Sie müssen Ihr Passwort ändern, bevor Sie fortfahren können."
+
+msgid "User data saved."
+msgstr "Benutzerdaten gespeichert."
+
+msgid "Back"
+msgstr "Zurück"
+
+msgid "Table of Contents"
+msgstr "Inhaltsverzeichnis"
+
+msgid "Was this page helpful?"
+msgstr "War diese Seite hilfreich?"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "No"
+msgstr "Nein"
+
+msgid "Optional: Tell us what could be improved..."
+msgstr "Optional: Was können wir verbessern?"
+
+msgid "Submit feedback"
+msgstr "Feedback senden"
+
+msgid "Thank you for your feedback!"
+msgstr "Vielen Dank für Ihr Feedback!"
+
+msgid "You have already submitted feedback for this page."
+msgstr "Sie haben bereits Feedback für diese Seite abgegeben."
+
+msgid "Failed to submit feedback."
+msgstr "Feedback konnte nicht gesendet werden."
+
+msgid "Page History"
+msgstr "Seitenhistorie"
+
+msgid "Restore this version"
+msgstr "Diese Version wiederherstellen"
+
+msgid "Back to list"
+msgstr "Zurück zur Liste"
+
+msgid "Revision Detail"
+msgstr "Versionsdetails"
+
+msgid "Restore this revision? Current content will be saved first."
+msgstr "Diese Version wiederherstellen? Der aktuelle Inhalt wird vorher gespeichert."
+
+msgid "Revision restored successfully."
+msgstr "Version erfolgreich wiederhergestellt."
+
+msgid "Failed to restore revision."
+msgstr "Version konnte nicht wiederhergestellt werden."
+
+msgid "Toggle dark mode"
+msgstr "Dunkelmodus umschalten"
+
+msgid "You do not have permission for this action."
+msgstr "Sie haben keine Berechtigung für diese Aktion."
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Compare"
+msgstr "Vergleichen"
+
+msgid "Basic search mode (short words may not be indexed)"
+msgstr "Einfache Suche (kurze Wörter werden möglicherweise nicht gefunden)"
+
+msgid "Dashboard"
+msgstr "Übersicht"
+
+msgid "In Trash"
+msgstr "Im Papierkorb"
+
+msgid "Pending Feedback"
+msgstr "Ausstehende Bewertungen"
+
+msgid "Recently Edited by You"
+msgstr "Zuletzt von Ihnen bearbeitet"
+
+msgid "Recently Created"
+msgstr "Zuletzt erstellt"
+
+msgid "Go to Pages"
+msgstr "Zu den Seiten"
+
+msgid "Internal Comments"
+msgstr "Interne Kommentare"
+
+msgid "Add a comment... Use @username to mention"
+msgstr "Kommentar hinzufügen... @benutzername zum Erwähnen"
+
+msgid "Send"
+msgstr "Senden"
+
+msgid "Failed to add comment."
+msgstr "Kommentar konnte nicht hinzugefügt werden."
+
+msgid "Accept"
+msgstr "Akzeptieren"
+
+msgid "Reject"
+msgstr "Ablehnen"
+
+msgid "This site uses cookies to ensure the best experience."
+msgstr "Diese Seite verwendet Cookies für die beste Nutzererfahrung."
+
+msgid "No pages edited yet."
+msgstr "Noch keine Seiten bearbeitet."
+
+msgid "Notify me when mentioned in comments (@username)"
+msgstr "Benachrichtigen, wenn in Kommentaren erwähnt (@benutzername)"
+
+msgid "Pages"
+msgstr "Seiten"
+
+msgid "Compare selected"
+msgstr "Ausgewählte vergleichen"
+
+msgid "Select exactly two revisions to compare."
+msgstr "Bitte genau zwei Versionen zum Vergleich auswählen."
+
+msgid "Related pages"
+msgstr "Verwandte Seiten"
+
+msgid "results"
+msgstr "Ergebnisse"
+
+msgid "Awaiting Review"
+msgstr "Wartet auf Prüfung"
+
+msgid "Stale (12+ months)"
+msgstr "Veraltet (12+ Monate)"
+
+msgid "No Description"
+msgstr "Ohne Beschreibung"
+
+msgid "Search Terms Without Results"
+msgstr "Suchbegriffe ohne Treffer"
+
+msgid "Initial setup required"
+msgstr "Ersteinrichtung erforderlich"
+
+msgid "No users found. Please run the following command on the server:"
+msgstr "Keine Benutzer gefunden. Bitte folgenden Befehl auf dem Server ausführen:"
+
+msgid "Tags"
+msgstr "Schlagwörter"
+
+msgid "comma-separated"
+msgstr "kommagetrennt"
+
+msgid "Workflow"
+msgstr "Workflow"
+
+msgid "Draft"
+msgstr "Entwurf"
+
+msgid "In Review"
+msgstr "In Prüfung"
+
+msgid "Published"
+msgstr "Veröffentlicht"
+
+msgid "Archived"
+msgstr "Archiviert"
+
+msgid "Subscribe"
+msgstr "Abonnieren"
+
+msgid "Unsubscribe"
+msgstr "Abbestellen"
+
+msgid "Subscribed!"
+msgstr "Abonniert!"
+
+msgid "Unsubscribed."
+msgstr "Abbestellt."
+
+msgid "I have read and understood this page"
+msgstr "Ich habe diese Seite gelesen und verstanden"
+
+msgid "Acknowledged."
+msgstr "Bestätigt."
+
+msgid "My Drafts"
+msgstr "Meine Entwürfe"
+
+msgid "My Pending Reviews"
+msgstr "Meine offenen Prüfungen"
