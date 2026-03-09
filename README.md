@@ -68,22 +68,74 @@ You will be prompted to change the password immediately.
 
 All settings are in `config/app.php` under the `Manual` section:
 
-| Key | Type | Description |
-|---|---|---|
-| `appName` | string | Application title |
-| `appLanguage` | string | HTML lang attribute (`en`, `de`) |
-| `baseUri` | string | Base URL |
-| `editorLanguage` | string | Summernote editor locale |
-| `enablePrint` | bool | Show print buttons |
-| `showAuthorDetails` | bool | Show author/date info on pages |
-| `showLinkButton` | bool | Show "copy link" button |
-| `showLoginButton` | bool | Show login button for guests |
-| `showNavigationIcons` | bool | Show icons in page tree |
-| `showNavigationNumbering` | bool | Show chapter numbers (1.2.3) |
-| `showNavigationRoot` | bool | Show root node in tree |
-| `showTopNavigation` | bool | Show top navigation bar |
-| `useLogo` | bool | Show logo instead of app name |
-| `logoPath` | string | Path to logo (relative to webroot) |
+### General
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `appName` | string | `'AppProfileSafe'` | Application title |
+| `appLanguage` | string | `'en'` | HTML lang attribute (`en`, `de`) |
+| `textDirection` | string | `'ltr'` | Text direction (`ltr`, `rtl`) |
+| `baseUri` | string | `'/'` | Base URL path |
+| `editorLanguage` | string | `'en-US'` | Summernote editor locale |
+
+### Navigation & Display
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `showAuthorDetails` | bool | `false` | Show author/date info on pages |
+| `showLinkButton` | bool | `true` | Show "copy link" button |
+| `showLoginButton` | bool | `true` | Show login button for guests |
+| `showNavigationIcons` | bool | `true` | Show icons in page tree |
+| `showNavigationNumbering` | bool | `true` | Show chapter numbers (1.2.3) |
+| `showNavigationRoot` | bool | `true` | Show root node in tree |
+| `showTopNavigation` | bool | `true` | Show top navigation bar |
+| `useLogo` | bool | `false` | Show logo instead of app name |
+| `logoPath` | string | `''` | Path to logo (relative to webroot) |
+| `enableBreadcrumbs` | bool | `true` | Breadcrumb navigation on pages |
+| `enablePrevNext` | bool | `true` | Previous/Next page buttons |
+| `enableDarkMode` | bool | `true` | Dark mode toggle in header |
+| `enableFontSize` | bool | `true` | Font size A-/A+ buttons |
+| `enablePrint` | bool | `false` | Print page/book buttons |
+
+### Content Features
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enableRevisions` | bool | `true` | Page version history with diff |
+| `enableFeedback` | bool | `true` | Thumbs up/down + comments |
+| `enableComments` | bool | `true` | Internal page comments for editors |
+| `enableMentions` | bool | `true` | @username mentions in comments |
+| `enableTranslations` | bool | `false` | Multi-language content support |
+| `contentLocales` | array | `['en']` | Available content languages |
+| `defaultLocale` | string | `'en'` | Default content language |
+| `enablePdfExport` | bool | `false` | PDF export (requires wkhtmltopdf) |
+| `enableMarkdownExport` | bool | `true` | Markdown export per page |
+| `enableImport` | bool | `true` | Import pages from Markdown/HTML |
+| `enableSmartLinks` | bool | `true` | Autocomplete for internal links |
+
+### Workflow & Review
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enableScheduledPublishing` | bool | `false` | Auto-publish/expire via cron |
+| `enableReviewProcess` | bool | `false` | Assign reviewers, approve/reject |
+| `enableSubscriptions` | bool | `true` | Subscribe to page changes |
+| `enableAcknowledgements` | bool | `false` | "Read and understood" confirmation |
+| `enableInlineComments` | bool | `false` | Paragraph-level review comments |
+
+### Administration
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enableAuditLog` | bool | `true` | Log all admin actions |
+| `enableContentAnalytics` | bool | `true` | Views/feedback analytics dashboard |
+| `enableMediaLibrary` | bool | `true` | Central media browser at `/media` |
+| `enableCookieConsent` | bool | `true` | GDPR cookie consent banner |
+| `enableWebhooks` | bool | `false` | HTTP POST on page events |
+| `maxUploadSize` | int | `10485760` | Max upload size in bytes (10 MB) |
+| `notifyEmail` | string | `''` | Email for admin notifications (empty = disabled) |
+| `trashRetentionDays` | int | `30` | Days before trashed pages are purged |
+| `staleContentMonths` | int | `12` | Months before pages are flagged as stale |
 
 ### Language
 
