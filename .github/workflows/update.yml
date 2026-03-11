@@ -21,6 +21,20 @@ jobs:
     name: PHP 8.4 - Lint, CS, Tests
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: guidevera_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,7 +43,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: intl, mbstring, pdo_mysql, sqlite3, pdo_sqlite, zip
+          extensions: intl, mbstring, pdo_mysql, zip
           tools: composer:v2
           coverage: none
 
@@ -48,6 +62,60 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -P3306 -uroot -proot --silent; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+          echo "MySQL did not become ready in time"
+          exit 1
+
+      - name: Create CI app_local.php
+        run: |
+          cat > config/app_local.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          return [
+              'Security' => [
+                  'salt' => env('SECURITY_SALT', 'test-salt-for-local-dev-please-change'),
+              ],
+              'Datasources' => [
+                  'default' => [
+                      'className' => \Cake\Database\Connection::class,
+                      'driver' => \Cake\Database\Driver\Mysql::class,
+                      'host' => '127.0.0.1',
+                      'port' => 3306,
+                      'username' => 'root',
+                      'password' => 'root',
+                      'database' => 'guidevera_test',
+                      'encoding' => 'utf8mb4',
+                      'timezone' => 'UTC',
+                      'cacheMetadata' => false,
+                      'quoteIdentifiers' => false,
+                  ],
+                  'test' => [
+                      'className' => \Cake\Database\Connection::class,
+                      'driver' => \Cake\Database\Driver\Mysql::class,
+                      'host' => '127.0.0.1',
+                      'port' => 3306,
+                      'username' => 'root',
+                      'password' => 'root',
+                      'database' => 'guidevera_test',
+                      'encoding' => 'utf8mb4',
+                      'timezone' => 'UTC',
+                      'cacheMetadata' => false,
+                      'quoteIdentifiers' => false,
+                  ],
+              ],
+          ];
+          PHP
 
       - name: PHP syntax check
         run: |
