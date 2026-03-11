@@ -63,7 +63,16 @@ class InstallCommand extends Command
         $created = $existed = 0;
 
         foreach ($statements as $stmt) {
-            if (empty($stmt) || str_starts_with($stmt, '--')) {
+            // Strip SQL comment lines from statement
+            $lines = explode("\n", $stmt);
+            $cleaned = [];
+            foreach ($lines as $line) {
+                if (!str_starts_with(trim($line), '--')) {
+                    $cleaned[] = $line;
+                }
+            }
+            $stmt = trim(implode("\n", $cleaned));
+            if (empty($stmt)) {
                 continue;
             }
             try {
