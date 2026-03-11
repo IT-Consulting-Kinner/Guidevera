@@ -150,19 +150,26 @@ class InstallCommand extends Command
                 {$path}");
         }
 
-        // 5. Check storage directory
+        // 5. Check storage directories
         $io->out('');
-        $io->out('5. Checking storage directory...');
+        $io->out('5. Checking storage directories...');
         $storagePath = ROOT . DS . 'storage';
-        if (!is_dir($storagePath)) {
-            mkdir($storagePath, 0775, true);
+        $storageDirs = [
+            'storage' => $storagePath,
+            'storage/media' => $storagePath . DS . 'media',
+            'storage/ratelimit' => $storagePath . DS . 'ratelimit',
+        ];
+        foreach ($storageDirs as $label => $path) {
+            if (!is_dir($path)) {
+                mkdir($path, 0775, true);
+                $io->out("   ✓ Created {$label}/");
+            }
+            if (is_writable($path)) {
+                $io->out("   ✓ {$label}/ writable.");
+            } else {
+                $io->warning("   ✗ {$label}/ NOT writable — run: chmod 775 {$path}");
+            }
         }
-        $mediaPath = $storagePath . DS . 'media';
-        if (!is_dir($mediaPath)) {
-            mkdir($mediaPath, 0775, true);
-        }
-        $io->out(is_writable($storagePath) ? '   ✓ storage/ writable.' : "   ✗ storage/ NOT writable — chmod 775
-            {$storagePath}");
 
         // 6. Security salt check
         $io->out('');
