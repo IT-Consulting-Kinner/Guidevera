@@ -349,11 +349,11 @@ class UsersController extends AppController
 
     private function hashPassword(string $pw): string
     {
-        return password_hash(hash_hmac('sha256', $pw, \Cake\Core\Configure::read('Security.salt')), PASSWORD_DEFAULT);
+        return password_hash(hash_hmac('sha256', $pw, \Cake\Utility\Security::getSalt()), PASSWORD_DEFAULT);
     }
     private function verifyPassword(string $pw, string $hash): bool
     {
-        return password_verify(hash_hmac('sha256', $pw, \Cake\Core\Configure::read('Security.salt')), $hash);
+        return password_verify(hash_hmac('sha256', $pw, \Cake\Utility\Security::getSalt()), $hash);
     }
     private function getRateLimitDir(): string
     {

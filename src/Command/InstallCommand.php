@@ -92,7 +92,7 @@ class InstallCommand extends Command
         $count = $users->find()->count();
         if ($count === 0) {
             $password = bin2hex(random_bytes(8));
-            $salt = Configure::read('Security.salt');
+            $salt = \Cake\Utility\Security::getSalt();
             $hashedPassword = password_hash(hash_hmac('sha256', $password, $salt), PASSWORD_DEFAULT);
 
             $admin = $users->newEntity([
@@ -158,7 +158,7 @@ class InstallCommand extends Command
         // 6. Security salt check
         $io->out('');
         $io->out('6. Security check...');
-        $salt = Configure::read('Security.salt');
+        $salt = \Cake\Utility\Security::getSalt();
         if ($salt === 'ab65982f846df40f37417be06b12bd942847aa9ee2e5871bb6f2ff1369cc929e') {
             $io->warning('   ⚠ Security.salt is still the default value!');
             $io->warning('   Set SECURITY_SALT environment variable to a unique random string.');

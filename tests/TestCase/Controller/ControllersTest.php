@@ -31,13 +31,18 @@ class ControllersTest extends TestCase
             }
         }
 
-        // Create test user (password: password123, hashed with HMAC-SHA256 + bcrypt using app salt)
-        $salt = \Cake\Core\Configure::read('Security.salt');
-        $hashedPw = password_hash(hash_hmac('sha256', 'password123', $salt), PASSWORD_DEFAULT);
+        // Create test user (password: password123, hashed with HMAC-SHA256 + bcrypt)
+        $salt = \Cake\Utility\Security::getSalt();
+        $this->assertNotSame('', $salt, 'Security salt must not be empty');
+        $hashedPw = password_hash(
+            hash_hmac('sha256', 'password123', $salt),
+            PASSWORD_DEFAULT
+        );
         $connection->execute(
-            "INSERT OR IGNORE INTO users (id, gender, username, password, fullname, email, role, change_password,
-                page_tree, status) VALUES (1, 'male', 'admin', '{$hashedPw}', 'Test Admin', 'admin@test.com', '
-                    admin', 0, '', 'active')"
+            "INSERT OR IGNORE INTO users (id, gender, username, password, fullname, email, role,
+                change_password, page_tree, status)
+                VALUES (1, 'male', 'admin', '{$hashedPw}', 'Test Admin',
+                'admin@test.com', 'admin', 0, '', 'active')"
         );
 
         // Create test pages with tree structure
