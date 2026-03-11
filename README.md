@@ -19,50 +19,122 @@ cd manual
 composer install --no-dev
 ```
 
-### 2. Configure the database
+### 2. Create the MySQL database
 
-Edit `config/app.php` and set your database credentials in the `Datasources.default` section:
-
-```php
-'host' => 'localhost',
-'username' => 'your_db_user',
-'password' => 'your_db_password',
-'database' => 'your_db_name',
-```
-
-Or use environment variables: `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`.
-
-### 3. Create the database
+Database names should use only letters, numbers, and underscores (no dots).
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE manual CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 ```
 
-### 4. Run the installer
+### 3. Configure database connection
+
+Copy the example config and edit it:
+
+```bash
+cp config/app_local.example.php config/app_local.php
+```
+
+In `config/app_local.php`, set your database credentials:
+
+```php
+'Datasources' => [
+    'default' => [
+        'host' => 'localhost',
+        'username' => 'your_db_user',
+        'password' => 'your_db_password',
+        'database' => 'manual',
+    ],
+],
+```
+
+Or use environment variables: `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`.
+
+### 4. Set the Security Salt
+
+Every installation must have a unique, random Security Salt. Generate one and set it
+as environment variable or in `config/app_local.php`:
+
+```bash
+# Generate a random salt
+php -r "echo bin2hex(random_bytes(32));"
+
+# Set as environment variable (add to .env, .bashrc, or server config)
+export SECURITY_SALT=your_generated_salt_here
+```
+
+Or in `config/app_local.php`:
+
+```php
+'Security' => [
+    'salt' => 'your_generated_salt_here',
+],
+```
+
+The installer will warn you if the salt is still the default value.
+
+### 5. Run the installer
 
 ```bash
 bin/cake install
 ```
 
-This creates all database tables and verifies the setup.
+The installer will:
 
-### 5. Set file permissions
+1. Test the database connection
+2. Create all 15 database tables
+3. Create the initial admin account (username + password shown once in the terminal)
+4. Create `tmp/`, `logs/`, `storage/`, `storage/media/`, `storage/ratelimit/`
+5. Verify file permissions
+6. Warn if the Security Salt is still the default
 
-```bash
-chmod -R 775 tmp/ logs/
-mkdir -p storage && chmod 775 storage/
+**Save the admin password immediately — it is only shown once.**
+
+### 6. Configure the web server
+
+Point the web server document root to the `webroot/` directory.
+
+Apache: The `.htaccess` files are already included.
+
+Nginx example:
+
+```nginx
+server {
+    root /path/to/manual/webroot;
+    index index.php;
+
+    location / {
+        try_files $uri /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
 ```
 
-### 6. Open in browser
+### 7. Open in browser and log in
 
-The install command creates the database tables and the initial admin account.
-The admin password is displayed once in the terminal — save it immediately.
-Log in with:
+Navigate to your application URL and log in with:
 
 - **Username:** `admin`
-- **Password:** *(shown on screen)*
+- **Password:** *(shown in terminal during step 5)*
 
-You will be prompted to change the password immediately.
+You will be prompted to change the password on first login.
+
+### Cron jobs (optional)
+
+For scheduled publishing and content quality checks:
+
+```bash
+# Auto-publish/expire pages (every 5 minutes)
+*/5 * * * * cd /path/to/manual && bin/cake publish-scheduler
+
+# Content quality report (daily at 2am, results shown in dashboard)
+0 2 * * * cd /path/to/manual && bin/cake quality-check
+```
 
 ## Configuration
 
