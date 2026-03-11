@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `page_translations` (
 CREATE TABLE IF NOT EXISTS `page_feedback` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `page_id` bigint UNSIGNED NOT NULL,
-  `rating` tinyint(1) NOT NULL DEFAULT 0,
+  `rating` tinyint NOT NULL DEFAULT 0,
   `comment` text NOT NULL,
   `client_ip` varchar(45) NOT NULL DEFAULT '',
   `status` varchar(10) NOT NULL DEFAULT 'pending',

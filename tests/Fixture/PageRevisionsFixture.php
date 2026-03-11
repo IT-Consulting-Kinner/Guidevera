@@ -12,7 +12,6 @@ class PageRevisionsFixture extends TestFixture
 
     public array $records = [
         [
-            'id' => 1,
             'page_id' => 1,
             'title' => 'Root Page (old version)',
             'description' => 'Old description',
@@ -22,7 +21,6 @@ class PageRevisionsFixture extends TestFixture
             'revision_note' => '',
         ],
         [
-            'id' => 2,
             'page_id' => 2,
             'title' => 'Child Page (draft)',
             'description' => '',

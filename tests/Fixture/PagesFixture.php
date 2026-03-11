@@ -22,6 +22,8 @@ class PagesFixture extends TestFixture
             'content' => '<p>Root content</p>',
             'views' => 5,
             'status' => 'active',
+            'workflow_status' => 'published',
+            'locale' => 'en',
         ],
         [
             'id' => 2,
@@ -34,6 +36,8 @@ class PagesFixture extends TestFixture
             'content' => '<p>Child content with <strong>test</strong> keyword</p>',
             'views' => 3,
             'status' => 'active',
+            'workflow_status' => 'published',
+            'locale' => 'en',
         ],
         [
             'id' => 3,
@@ -46,6 +50,8 @@ class PagesFixture extends TestFixture
             'content' => '<p>Draft content</p>',
             'views' => 0,
             'status' => 'inactive',
+            'workflow_status' => 'draft',
+            'locale' => 'en',
         ],
     ];
 }
