@@ -64,8 +64,13 @@ class PagesServiceTest extends TestCase
     {
         $pages = $this->buildPageTree();
         $result = PagesService::calculateChapterNumbering($pages, true);
-        // Root page should have chapter number
-        $this->assertStringContainsString('1', $result[0]['title'] ?? $result[0]->title ?? '');
+        // Child pages should have chapter numbers prepended
+        $childTitle = $result[1]['title'] ?? $result[1]->title ?? '';
+        $this->assertMatchesRegularExpression(
+            '/^\d/',
+            $childTitle,
+            'Child page title should start with chapter number'
+        );
     }
 
     public function testChapterNumberingWithoutNumbering(): void

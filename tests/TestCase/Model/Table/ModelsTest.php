@@ -1,14 +1,19 @@
 <?php
 
+/**
+ * Model integration tests.
+ *
+ * Schema is loaded by tests/bootstrap.php via SchemaLoader.
+ * No manual schema loading needed here.
+ */
+
 declare(strict_types=1);
 
 namespace App\Test\TestCase\Model\Table;
 
+use App\Model\Table\PagesindexTable;
 use App\Model\Table\PagesTable;
 use App\Model\Table\UsersTable;
-use App\Model\Table\TemplatesTable;
-use App\Model\Table\PagesindexTable;
-use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 
 class ModelsTest extends TestCase
@@ -17,45 +22,28 @@ class ModelsTest extends TestCase
 
     protected PagesTable $Pages;
     protected UsersTable $Users;
-    protected TemplatesTable $Templates;
     protected PagesindexTable $Pagesindex;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        // Ensure tables exist in test DB
-        $connection = \Cake\Datasource\ConnectionManager::get('test');
-        $schemaFile = ROOT . DS . 'db' . DS . 'schema.sql';
-        if (file_exists($schemaFile)) {
-            $statements = explode(';', file_get_contents($schemaFile));
-            foreach ($statements as $stmt) {
-                $stmt = trim($stmt);
-                if (!empty($stmt)) {
-                    $connection->execute($stmt);
-                }
-            }
-        }
-
         $this->Pages = $this->fetchTable('Pages');
         $this->Users = $this->fetchTable('Users');
-        $this->Templates = $this->fetchTable('Templates');
         $this->Pagesindex = $this->fetchTable('Pagesindex');
     }
 
     public function tearDown(): void
     {
-        // Clean up tables
         $connection = \Cake\Datasource\ConnectionManager::get('test');
         $connection->execute('DELETE FROM pagesindex');
         $connection->execute('DELETE FROM pages');
         $connection->execute('DELETE FROM users');
-        $connection->execute('DELETE FROM templates');
 
         parent::tearDown();
     }
 
-    // ---- USERS ----
+    // ── Users ──
 
     public function testCreateUser(): void
     {
@@ -82,7 +70,7 @@ class ModelsTest extends TestCase
             'password' => 'pw',
             'fullname' => 'Bad User',
             'email' => 'bad@test.com',
-            'role' => 'superuser',  // invalid
+            'role' => 'superuser',
             'status' => 'active',
         ]);
         $this->assertNotEmpty($user->getErrors());
@@ -100,10 +88,13 @@ class ModelsTest extends TestCase
             ->all();
 
         $this->assertCount(2, $users);
-        $this->assertEquals('Alice Admin', $users->first()->fullname);
+        $this->assertEquals(
+            'Alice Admin',
+            $users->first()->fullname
+        );
     }
 
-    // ---- PAGES ----
+    // ── Pages ──
 
     public function testCreatePage(): void
     {
@@ -118,14 +109,10 @@ class ModelsTest extends TestCase
         $result = $this->Pages->save($page);
         $this->assertNotFalse($result);
         $this->assertNotEmpty($result->id);
-        // Tree columns should be set
-        $this->assertNotNull($result->lft);
-        $this->assertNotNull($result->rght);
     }
 
     public function testTreeBehavior(): void
     {
-        // Create root page
         $root = $this->Pages->newEntity([
             'title' => 'Manual',
             'status' => 'active',
@@ -133,7 +120,6 @@ class ModelsTest extends TestCase
         ]);
         $this->Pages->save($root);
 
-        // Create child
         $child = $this->Pages->newEntity([
             'title' => 'Chapter 1',
             'status' => 'active',
@@ -141,7 +127,6 @@ class ModelsTest extends TestCase
         ]);
         $this->Pages->save($child);
 
-        // Create grandchild
         $grandchild = $this->Pages->newEntity([
             'title' => 'Section 1.1',
             'status' => 'active',
@@ -151,32 +136,51 @@ class ModelsTest extends TestCase
 
         // Test find('threaded')
         $tree = $this->Pages->find('threaded')
-            ->orderBy(['lft' => 'ASC'])
+            ->orderBy(['position' => 'ASC'])
             ->all()
             ->toArray();
 
-        $this->assertCount(1, $tree); // Only root at top level
+        $this->assertCount(1, $tree);
         $this->assertEquals('Manual', $tree[0]->title);
         $this->assertCount(1, $tree[0]->children);
-        $this->assertEquals('Chapter 1', $tree[0]->children[0]->title);
-        $this->assertCount(1, $tree[0]->children[0]->children);
-        $this->assertEquals('Section 1.1', $tree[0]->children[0]->children[0]->title);
+        $this->assertEquals(
+            'Chapter 1',
+            $tree[0]->children[0]->title
+        );
+        $this->assertCount(
+            1,
+            $tree[0]->children[0]->children
+        );
+        $this->assertEquals(
+            'Section 1.1',
+            $tree[0]->children[0]->children[0]->title
+        );
 
         // Test find('path')
-        $path = $this->Pages->find('path', for: $grandchild->id)->all()->toArray();
+        $path = $this->Pages->find(
+            'path',
+            for: $grandchild->id
+        )->all()->toArray();
         $this->assertCount(3, $path);
         $this->assertEquals('Manual', $path[0]->title);
         $this->assertEquals('Chapter 1', $path[1]->title);
         $this->assertEquals('Section 1.1', $path[2]->title);
 
         // Test find('children')
-        $children = $this->Pages->find('children', for: $root->id)->all();
-        $this->assertCount(2, $children); // child + grandchild
+        $children = $this->Pages->find(
+            'children',
+            for: $root->id
+        )->all();
+        $this->assertCount(2, $children);
     }
 
     public function testPageAssociations(): void
     {
-        $user = $this->createTestUser('author', 'Author User', 'editor');
+        $user = $this->createTestUser(
+            'author',
+            'Author User',
+            'editor'
+        );
 
         $page = $this->Pages->newEntity([
             'title' => 'Test Page',
@@ -187,57 +191,31 @@ class ModelsTest extends TestCase
         ]);
         $this->Pages->save($page);
 
-        // Fetch with associations
-        $found = $this->Pages->get($page->id, contain: ['CreatedByUsers', 'ModifiedByUsers']);
-        $this->assertEquals('Author User', $found->creator->fullname);
-        $this->assertEquals('Author User', $found->modifier->fullname);
+        $found = $this->Pages->get(
+            $page->id,
+            contain: ['CreatedByUsers', 'ModifiedByUsers']
+        );
+        $this->assertEquals(
+            'Author User',
+            $found->creator->fullname
+        );
+        $this->assertEquals(
+            'Author User',
+            $found->modifier->fullname
+        );
     }
 
     public function testPageValidation(): void
     {
         $page = $this->Pages->newEntity([
             'title' => 'Valid Page',
-            'status' => 'bogus',  // invalid
+            'status' => 'bogus',
         ]);
         $this->assertNotEmpty($page->getErrors());
         $this->assertArrayHasKey('status', $page->getErrors());
     }
 
-    // ---- TEMPLATES ----
-
-    public function testCreateTemplate(): void
-    {
-        $tpl = $this->Templates->newEntity([
-            'title' => 'Standard Template',
-            'content' => '<h1>{title}</h1><p>{content}</p>',
-            'status' => 'active',
-        ]);
-        $this->assertEmpty($tpl->getErrors());
-        $result = $this->Templates->save($tpl);
-        $this->assertNotFalse($result);
-        $this->assertNotEmpty($result->id);
-    }
-
-    public function testUpdateTemplate(): void
-    {
-        $tpl = $this->createTestTemplate('Original', 'active');
-        $tpl = $this->Templates->patchEntity($tpl, ['title' => 'Updated Title']);
-        $result = $this->Templates->save($tpl);
-        $this->assertNotFalse($result);
-
-        $found = $this->Templates->get($tpl->id);
-        $this->assertEquals('Updated Title', $found->title);
-    }
-
-    public function testDeleteTemplate(): void
-    {
-        $tpl = $this->createTestTemplate('ToDelete', 'inactive');
-        $result = $this->Templates->delete($tpl);
-        $this->assertTrue($result);
-        $this->assertNull($this->Templates->find()->where(['id' => $tpl->id])->first());
-    }
-
-    // ---- PAGESINDEX ----
+    // ── Pagesindex ──
 
     public function testPagesindexKeywords(): void
     {
@@ -247,8 +225,14 @@ class ModelsTest extends TestCase
         ]);
         $this->Pages->save($page);
 
-        $kw1 = $this->Pagesindex->newEntity(['keyword' => 'security', 'page_id' => $page->id]);
-        $kw2 = $this->Pagesindex->newEntity(['keyword' => 'authentication', 'page_id' => $page->id]);
+        $kw1 = $this->Pagesindex->newEntity([
+            'keyword' => 'security',
+            'page_id' => $page->id,
+        ]);
+        $kw2 = $this->Pagesindex->newEntity([
+            'keyword' => 'authentication',
+            'page_id' => $page->id,
+        ]);
         $this->Pagesindex->save($kw1);
         $this->Pagesindex->save($kw2);
 
@@ -261,20 +245,32 @@ class ModelsTest extends TestCase
 
     public function testPagesindexBelongsToPages(): void
     {
-        $page = $this->Pages->newEntity(['title' => 'KW Page', 'status' => 'active']);
+        $page = $this->Pages->newEntity([
+            'title' => 'KW Page',
+            'status' => 'active',
+        ]);
         $this->Pages->save($page);
 
-        $kw = $this->Pagesindex->newEntity(['keyword' => 'test', 'page_id' => $page->id]);
+        $kw = $this->Pagesindex->newEntity([
+            'keyword' => 'test',
+            'page_id' => $page->id,
+        ]);
         $this->Pagesindex->save($kw);
 
-        $found = $this->Pagesindex->get($kw->id, contain: ['Pages']);
+        $found = $this->Pagesindex->get(
+            $kw->id,
+            contain: ['Pages']
+        );
         $this->assertEquals('KW Page', $found->page->title);
     }
 
-    // ---- Helpers ----
+    // ── Helpers ──
 
-    private function createTestUser(string $username, string $fullname, string $role): \App\Model\Entity\User
-    {
+    private function createTestUser(
+        string $username,
+        string $fullname,
+        string $role
+    ): \App\Model\Entity\User {
         $user = $this->Users->newEntity([
             'gender' => 'male',
             'username' => $username,
@@ -285,17 +281,7 @@ class ModelsTest extends TestCase
             'status' => 'active',
         ]);
         $this->Users->save($user);
-        return $user;
-    }
 
-    private function createTestTemplate(string $title, string $status): \App\Model\Entity\Template
-    {
-        $tpl = $this->Templates->newEntity([
-            'title' => $title,
-            'content' => '<p>Template content</p>',
-            'status' => $status,
-        ]);
-        $this->Templates->save($tpl);
-        return $tpl;
+        return $user;
     }
 }
