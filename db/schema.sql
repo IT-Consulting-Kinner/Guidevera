@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `change_password` tinyint(1) NOT NULL DEFAULT 0,
   `page_tree` text NOT NULL,
   `notify_mentions` tinyint(1) NOT NULL DEFAULT 1,
-  `preferences` text NOT NULL DEFAULT '{}',
+  `preferences` text NOT NULL,
   `status` varchar(10) NOT NULL DEFAULT 'inactive',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
