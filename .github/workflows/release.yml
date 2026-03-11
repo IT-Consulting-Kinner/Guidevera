@@ -76,11 +76,67 @@ jobs:
       - name: Wait for MySQL
         run: |
           for i in {1..60}; do
-            (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1 && exit 0
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uguidevera -pguidevera --silent; then
+              exit 0
+            fi
             sleep 2
           done
           echo "MySQL did not become ready in time."
           exit 1
+
+      - name: Create CI app_local.php
+        run: |
+          cat > config/app_local.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          use Cake\Database\Connection;
+          use Cake\Database\Driver\Mysql;
+
+          return [
+              'debug' => filter_var(env('DEBUG', false), FILTER_VALIDATE_BOOLEAN),
+              'Security' => [
+                  'salt' => env('SECURITY_SALT', 'ci-temporary-salt-change-me'),
+              ],
+              'App' => [
+                  'fullBaseUrl' => env('APP_FULL_BASE_URL', 'http://localhost'),
+              ],
+              'Datasources' => [
+                  'default' => [
+                      'className' => Connection::class,
+                      'driver' => Mysql::class,
+                      'persistent' => false,
+                      'host' => env('DB_HOST', '127.0.0.1'),
+                      'port' => (int)env('DB_PORT', '3306'),
+                      'username' => env('DB_USERNAME', 'guidevera'),
+                      'password' => env('DB_PASSWORD', 'guidevera'),
+                      'database' => env('DB_DATABASE', 'guidevera_test'),
+                      'encoding' => 'utf8mb4',
+                      'timezone' => 'UTC',
+                      'flags' => [],
+                      'cacheMetadata' => false,
+                      'quoteIdentifiers' => false,
+                      'log' => false,
+                  ],
+                  'test' => [
+                      'className' => Connection::class,
+                      'driver' => Mysql::class,
+                      'persistent' => false,
+                      'host' => env('DB_HOST', '127.0.0.1'),
+                      'port' => (int)env('DB_PORT', '3306'),
+                      'username' => env('DB_USERNAME', 'guidevera'),
+                      'password' => env('DB_PASSWORD', 'guidevera'),
+                      'database' => env('DB_DATABASE', 'guidevera_test'),
+                      'encoding' => 'utf8mb4',
+                      'timezone' => 'UTC',
+                      'flags' => [],
+                      'cacheMetadata' => false,
+                      'quoteIdentifiers' => false,
+                      'log' => false,
+                  ],
+              ],
+          ];
+          PHP
 
       - name: PHP syntax check
         run: |
