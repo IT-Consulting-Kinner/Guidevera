@@ -80,6 +80,9 @@ class ControllersTest extends TestCase
         }
 
         $this->enableCsrfToken();
+        $this->configRequest([
+            'headers' => ['X-Requested-With' => 'XMLHttpRequest'],
+        ]);
     }
 
     public function tearDown(): void
@@ -102,7 +105,7 @@ class ControllersTest extends TestCase
 
     public function testPagesGetTree(): void
     {
-        $this->post('/pages/get-tree');
+        $this->post('/pages/get_tree');
         $this->assertResponseOk();
 
         $body = json_decode(
@@ -211,7 +214,7 @@ class ControllersTest extends TestCase
                 'fullname' => 'Test',
             ],
         ]);
-        $this->post('/pages/set-status', [
+        $this->post('/pages/set_status', [
             'id' => 3,
             'status' => 'active',
         ]);
