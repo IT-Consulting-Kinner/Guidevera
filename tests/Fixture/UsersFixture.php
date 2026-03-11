@@ -21,6 +21,8 @@ class UsersFixture extends TestFixture
             'role' => 'admin',
             'change_password' => 0,
             'page_tree' => '{"open":"","active_page":"1"}',
+            'notify_mentions' => 1,
+            'preferences' => '{}',
             'status' => 'active',
         ],
     ];

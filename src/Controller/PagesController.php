@@ -100,12 +100,13 @@ class PagesController extends AppController
         if ($id && (Configure::read('Manual.enableFeedback') ?? false)) {
             $fb = $this->fetchTable('PageFeedback');
             $counts = $fb->find()->select(['rating', 'cnt' => $fb->find()->func()->count('*')])
-                ->where(['page_id' => $id])->group('rating')->all()->combine('rating', 'cnt')->toArray();
+                ->where(['page_id' => $id])->groupBy('rating')->all()->combine('rating', 'cnt')->toArray();
             $feedbackSummary = ['up' => (int)($counts[1] ?? 0), 'down' => (int)($counts[-1] ?? 0)];
         }
 
-        $allPages = $this->Pages->find()->where(['deleted_at IS' => null])->orderBy(['position' => '
-            ASC'])->all()->toArray();
+        $allPages = $this->Pages->find()
+            ->where(['deleted_at IS' => null])
+            ->orderBy(['position' => 'ASC'])->all()->toArray();
         $this->set(compact(
             'page',
             'allPages',
@@ -162,7 +163,7 @@ class PagesController extends AppController
             if (Configure::read('Manual.enableFeedback') ?? false) {
                 $fb = $this->fetchTable('PageFeedback');
                 $counts = $fb->find()->select(['rating', 'cnt' => $fb->find()->func()->count('*')])
-                    ->where(['page_id' => $id])->group('rating')->all()->combine('rating', 'cnt')->toArray();
+                    ->where(['page_id' => $id])->groupBy('rating')->all()->combine('rating', 'cnt')->toArray();
                 $feedback = [
                     'up' => (int)($counts[1] ?? 0), 'down' => (int)($counts[-1] ?? 0),
                     'comments' => $fb->find()->where(['page_id' => $id, 'status' => 'approved'])
@@ -886,7 +887,7 @@ class PagesController extends AppController
         // All tags with counts
         $tags = $this->fetchTable('PageTags')->find()
             ->select(['tag', 'cnt' => $this->fetchTable('PageTags')->find()->func()->count('*')])
-            ->group('tag')->orderBy(['cnt' => 'DESC'])->all()->toArray();
+            ->groupBy('tag')->orderBy(['cnt' => 'DESC'])->all()->toArray();
         return $this->jsonSuccess(['tags' => array_map(fn($t) => ['tag' => $t->tag, 'count' => (int)$t->cnt], $tags)]);
     }
 
@@ -936,7 +937,7 @@ class PagesController extends AppController
         $related = $this->fetchTable('PageTags')->find()
             ->contain(['Pages'])->where(['tag IN' => $myTags, 'page_id !=' => $pageId])
             ->where(['Pages.deleted_at IS' => null, 'Pages.status' => 'active'])
-            ->group('PageTags.page_id')
+            ->groupBy('PageTags.page_id')
             ->orderBy([$this->fetchTable('PageTags')->find()->func()->count('*') => 'DESC'])
             ->limit(5)->all();
 
@@ -1161,7 +1162,7 @@ class PagesController extends AppController
         // Pages with bad feedback ratio
         $fb = $this->fetchTable('PageFeedback');
         $badFeedback = $fb->find()->select(['page_id', 'neg' => $fb->find()->func()->count('*')])
-            ->where(['rating' => -1])->group('page_id')->orderBy(['neg' => 'DESC'])->limit(10)->all();
+            ->where(['rating' => -1])->groupBy('page_id')->orderBy(['neg' => 'DESC'])->limit(10)->all();
         $badPages = [];
         foreach ($badFeedback as $f) {
             $page = $this->Pages->find()->select(['id', 'title'])->where(['id' => $f->page_id])->first();
@@ -1173,7 +1174,7 @@ class PagesController extends AppController
         // Frequently updated
         $freq = $this->fetchTable('PageRevisions')->find()
             ->select(['page_id', 'cnt' => $this->fetchTable('PageRevisions')->find()->func()->count('*')])
-            ->group('page_id')->orderBy(['cnt' => 'DESC'])->limit(10)->all();
+            ->groupBy('page_id')->orderBy(['cnt' => 'DESC'])->limit(10)->all();
         $freqPages = [];
         foreach ($freq as $f) {
             $page = $this->Pages->find()->select(['id', 'title'])->where(['id' => $f->page_id])->first();

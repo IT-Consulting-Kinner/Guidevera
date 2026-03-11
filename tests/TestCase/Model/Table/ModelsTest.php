@@ -55,6 +55,8 @@ class ModelsTest extends TestCase
             'email' => 'admin@test.com',
             'role' => 'admin',
             'status' => 'active',
+            'page_tree' => '',
+            'preferences' => '{}',
         ]);
         $this->assertEmpty($user->getErrors());
         $result = $this->Users->save($user);
@@ -115,6 +117,7 @@ class ModelsTest extends TestCase
     {
         $root = $this->Pages->newEntity([
             'title' => 'Manual',
+            'content' => '',
             'status' => 'active',
             'parent_id' => null,
         ]);
@@ -122,6 +125,7 @@ class ModelsTest extends TestCase
 
         $child = $this->Pages->newEntity([
             'title' => 'Chapter 1',
+            'content' => '',
             'status' => 'active',
             'parent_id' => $root->id,
         ]);
@@ -129,6 +133,7 @@ class ModelsTest extends TestCase
 
         $grandchild = $this->Pages->newEntity([
             'title' => 'Section 1.1',
+            'content' => '',
             'status' => 'active',
             'parent_id' => $child->id,
         ]);
@@ -221,6 +226,7 @@ class ModelsTest extends TestCase
     {
         $page = $this->Pages->newEntity([
             'title' => 'Keyword Test',
+            'content' => '',
             'status' => 'active',
         ]);
         $this->Pages->save($page);
@@ -247,6 +253,7 @@ class ModelsTest extends TestCase
     {
         $page = $this->Pages->newEntity([
             'title' => 'KW Page',
+            'content' => '',
             'status' => 'active',
         ]);
         $this->Pages->save($page);
@@ -279,6 +286,8 @@ class ModelsTest extends TestCase
             'email' => $username . '@test.com',
             'role' => $role,
             'status' => 'active',
+            'page_tree' => '',
+            'preferences' => '{}',
         ]);
         $this->Users->save($user);
 
