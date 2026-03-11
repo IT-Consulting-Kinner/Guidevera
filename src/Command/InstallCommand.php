@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Command;
@@ -43,7 +44,8 @@ class InstallCommand extends Command
             $io->success('   Database connection OK.');
         } catch (\Exception $e) {
             $io->error('   Database connection FAILED: ' . $e->getMessage());
-            $io->out('   Configure your database in config/app_local.php or set DB_HOST, DB_USERNAME, DB_PASSWORD, DB_DATABASE');
+            $io->out('   Configure your database in config/app_local.php or set DB_HOST, DB_USERNAME, DB_PASSWORD,
+                DB_DATABASE');
             return self::CODE_ERROR;
         }
 
@@ -61,7 +63,9 @@ class InstallCommand extends Command
         $created = $existed = 0;
 
         foreach ($statements as $stmt) {
-            if (empty($stmt) || str_starts_with($stmt, '--')) continue;
+            if (empty($stmt) || str_starts_with($stmt, '--')) {
+                continue;
+            }
             try {
                 $conn->execute($stmt);
                 if (stripos($stmt, 'CREATE TABLE') !== false) {
@@ -130,18 +134,26 @@ class InstallCommand extends Command
         // 4. Check writable directories
         $io->out('4. Checking file permissions...');
         foreach (['tmp' => ROOT . DS . 'tmp', 'logs' => ROOT . DS . 'logs'] as $label => $path) {
-            if (!is_dir($path)) @mkdir($path, 0775, true);
-            $io->out(is_writable($path) ? "   ✓ {$label}/ writable." : "   ✗ {$label}/ NOT writable — chmod -R 775 {$path}");
+            if (!is_dir($path)) {
+                @mkdir($path, 0775, true);
+            }
+            $io->out(is_writable($path) ? "   ✓ {$label}/ writable." : "   ✗ {$label}/ NOT writable — chmod -R 775
+                {$path}");
         }
 
         // 5. Check storage directory
         $io->out('');
         $io->out('5. Checking storage directory...');
         $storagePath = ROOT . DS . 'storage';
-        if (!is_dir($storagePath)) mkdir($storagePath, 0775, true);
+        if (!is_dir($storagePath)) {
+            mkdir($storagePath, 0775, true);
+        }
         $mediaPath = $storagePath . DS . 'media';
-        if (!is_dir($mediaPath)) mkdir($mediaPath, 0775, true);
-        $io->out(is_writable($storagePath) ? '   ✓ storage/ writable.' : "   ✗ storage/ NOT writable — chmod 775 {$storagePath}");
+        if (!is_dir($mediaPath)) {
+            mkdir($mediaPath, 0775, true);
+        }
+        $io->out(is_writable($storagePath) ? '   ✓ storage/ writable.' : "   ✗ storage/ NOT writable — chmod 775
+            {$storagePath}");
 
         // 6. Security salt check
         $io->out('');

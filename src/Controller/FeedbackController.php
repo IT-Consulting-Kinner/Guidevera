@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -20,13 +21,18 @@ class FeedbackController extends AppController
      */
     public function submit(): ?\Cake\Http\Response
     {
-        $this->request->allowMethod(['post']); $this->autoRender = false;
-        if (!(Configure::read('Manual.enableFeedback') ?? false)) return $this->jsonError('feature_disabled');
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+        if (!(Configure::read('Manual.enableFeedback') ?? false)) {
+            return $this->jsonError('feature_disabled');
+        }
 
         $pageId = (int)$this->request->getData('page_id', 0);
         $rating = (int)$this->request->getData('rating', 0);
         $comment = trim($this->request->getData('comment', ''));
-        if (!$pageId || !in_array($rating, [-1, 1])) return $this->jsonError('invalid_feedback');
+        if (!$pageId || !in_array($rating, [-1, 1])) {
+            return $this->jsonError('invalid_feedback');
+        }
 
         $clientIp = $this->request->clientIp();
         $fb = $this->fetchTable('PageFeedback');
@@ -36,7 +42,9 @@ class FeedbackController extends AppController
             'page_id' => $pageId, 'client_ip' => $clientIp,
             'created >=' => new \Cake\I18n\DateTime('-1 hour'),
         ])->count();
-        if ($recent > 0) return $this->jsonError('feedback_rate_limited');
+        if ($recent > 0) {
+            return $this->jsonError('feedback_rate_limited');
+        }
 
         $entity = $fb->newEntity([
             'page_id' => $pageId, 'rating' => $rating,
@@ -47,8 +55,10 @@ class FeedbackController extends AppController
 
         if ($fb->save($entity)) {
             if (!empty($comment)) {
-                $this->sendNotification('New feedback',
-                    "Feedback on page #{$pageId}: " . ($rating > 0 ? 'thumbs up' : 'thumbs down') . "\n\n{$comment}");
+                $this->sendNotification(
+                    'New feedback',
+                    "Feedback on page #{$pageId}: " . ($rating > 0 ? 'thumbs up' : 'thumbs down') . "\n\n{$comment}"
+                );
             }
             return $this->jsonSuccess(['success' => true]);
         }
@@ -60,13 +70,20 @@ class FeedbackController extends AppController
      */
     public function moderate(): ?\Cake\Http\Response
     {
-        $this->request->allowMethod(['post']); $this->autoRender = false;
-        if (!(Configure::read('Manual.enableFeedback') ?? false)) return $this->jsonError('feature_disabled');
-        if (!$this->hasRole(self::ROLE_ADMIN)) return $this->requireRole(self::ROLE_ADMIN) ? null : $this->response;
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+        if (!(Configure::read('Manual.enableFeedback') ?? false)) {
+            return $this->jsonError('feature_disabled');
+        }
+        if (!$this->hasRole(self::ROLE_ADMIN)) {
+            return $this->requireRole(self::ROLE_ADMIN) ? null : $this->response;
+        }
 
         $feedbackId = (int)$this->request->getData('id', 0);
         $action = $this->request->getData('action', '');
-        if (!$feedbackId || !in_array($action, ['approve', 'reject'])) return $this->jsonError('invalid_action');
+        if (!$feedbackId || !in_array($action, ['approve', 'reject'])) {
+            return $this->jsonError('invalid_action');
+        }
 
         $this->fetchTable('PageFeedback')->updateAll(
             ['status' => $action === 'approve' ? 'approved' : 'rejected'],
@@ -81,8 +98,12 @@ class FeedbackController extends AppController
     public function pending(): ?\Cake\Http\Response
     {
         $this->autoRender = false;
-        if (!(Configure::read('Manual.enableFeedback') ?? false)) return $this->jsonError('feature_disabled');
-        if (!$this->hasRole(self::ROLE_ADMIN)) return $this->requireRole(self::ROLE_ADMIN) ? null : $this->response;
+        if (!(Configure::read('Manual.enableFeedback') ?? false)) {
+            return $this->jsonError('feature_disabled');
+        }
+        if (!$this->hasRole(self::ROLE_ADMIN)) {
+            return $this->requireRole(self::ROLE_ADMIN) ? null : $this->response;
+        }
 
         $items = $this->fetchTable('PageFeedback')->find()
             ->contain(['Pages'])

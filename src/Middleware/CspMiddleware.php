@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Middleware;
@@ -34,7 +35,8 @@ class CspMiddleware implements MiddlewareInterface
 
         if (Configure::read('debug')) {
             // Development: relaxed for debugging
-            $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; frame-ancestors 'self'";
+            $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self'
+                'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; frame-ancestors 'self'";
         } else {
             // Production: nonce-based script-src, no unsafe-inline for scripts
             // Summernote still needs unsafe-inline for style-src (inline styles on contenteditable)

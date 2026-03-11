@@ -43,15 +43,15 @@
         "platform-check": true,
         "sort-packages": true
     },
-	"scripts": {
-		"post-install-cmd": "App\\Console\\Installer::postInstall",
-		"post-create-project-cmd": "App\\Console\\Installer::postInstall",
-		"check": [
-			"@test",
-			"@cs-check"
-		],
-		"cs-check": "phpcs --colors -p src/ tests/ config/",
-		"cs-fix": "phpcbf --colors -p src/ tests/ config/",
-		"test": "phpunit --colors=always"
-	}
+    "scripts": {
+        "post-install-cmd": "App\\Console\\Installer::postInstall",
+        "post-create-project-cmd": "App\\Console\\Installer::postInstall",
+        "check": [
+            "@test",
+            "@cs-check"
+        ],
+        "cs-check": "vendor/bin/phpcs --colors -p --exclude=PSR2.Classes.PropertyDeclaration src/ tests/ config/",
+        "cs-fix": "vendor/bin/phpcbf --colors -p src/ tests/ config/",
+        "test": "SECURITY_SALT=test-salt-for-local-dev-please-change phpunit --colors=always"
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
@@ -36,7 +37,9 @@ class UploadService
      */
     public static function validate(UploadedFileInterface $file): ?string
     {
-        if ($file->getError() !== UPLOAD_ERR_OK) return 'upload_failed';
+        if ($file->getError() !== UPLOAD_ERR_OK) {
+            return 'upload_failed';
+        }
 
         $filename = basename($file->getClientFilename());
 
@@ -47,11 +50,15 @@ class UploadService
 
         // Block dangerous extensions
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        if (in_array($ext, self::BLOCKED_EXTENSIONS)) return 'invalid_file_type';
+        if (in_array($ext, self::BLOCKED_EXTENSIONS)) {
+            return 'invalid_file_type';
+        }
 
         // Size limit from config
         $maxSize = Configure::read('Manual.maxUploadSize') ?? 10485760;
-        if ($file->getSize() > $maxSize) return 'file_too_large';
+        if ($file->getSize() > $maxSize) {
+            return 'file_too_large';
+        }
 
         // MIME type check — real content via finfo, not just client-reported
         try {
@@ -61,7 +68,9 @@ class UploadService
             } else {
                 $mime = $file->getClientMediaType() ?? 'application/octet-stream';
             }
-            if (in_array($mime, self::BLOCKED_MIMES)) return 'invalid_file_type';
+            if (in_array($mime, self::BLOCKED_MIMES)) {
+                return 'invalid_file_type';
+            }
         } catch (\Exception $e) {
             Log::warning('MIME check failed: ' . $e->getMessage());
         }
@@ -87,12 +96,16 @@ class UploadService
     public static function resolveConflict(string $filename, string $directory): string
     {
         $target = $directory . $filename;
-        if (!file_exists($target)) return $filename;
+        if (!file_exists($target)) {
+            return $filename;
+        }
 
         $base = pathinfo($filename, PATHINFO_FILENAME);
         $ext = pathinfo($filename, PATHINFO_EXTENSION);
         $i = 1;
-        while (file_exists($directory . "{$base}_{$i}.{$ext}")) $i++;
+        while (file_exists($directory . "{$base}_{$i}.{$ext}")) {
+            $i++;
+        }
         return "{$base}_{$i}.{$ext}";
     }
 }

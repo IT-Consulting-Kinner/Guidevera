@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -20,6 +21,7 @@ class PageRevisionsTable extends Table
         $this->setPrimaryKey('id');
         $this->addBehavior('Timestamp', ['events' => ['Model.beforeSave' => ['created' => 'new']]]);
         $this->belongsTo('Pages', ['foreignKey' => 'page_id']);
-        $this->belongsTo('CreatedByUsers', ['className' => 'Users', 'foreignKey' => 'created_by', 'propertyName' => 'creator']);
+        $this->belongsTo('CreatedByUsers', ['className' => 'Users', 'foreignKey' => 'created_by',
+            'propertyName' => 'creator']);
     }
 }

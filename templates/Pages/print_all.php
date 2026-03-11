@@ -31,7 +31,8 @@ $showAuthor = $public['showAuthorDetails'] ?? true;
     ?>
         <?php if ($first): ?>
             <h1><button onclick="window.print()">Print</button><br/><?= h($title) ?></h1>
-            <?php if ($showAuthor): ?><h4><?= __('Created') ?>: <?= date('d.m.Y') ?><br/><?= h($auth['fullname'] ?? '') ?></h4><?php endif; ?>
+            <?php if ($showAuthor): ?><h4><?= __('Created') ?>: <?= date('d.m.Y') ?><br/><?= h($auth['fullname'] ??
+                '') ?></h4><?php endif; ?>
             <div class="pagebreak"> </div>
             <?php if (!empty($toc)): ?>
                 <h3><?= __('Table of Contents') ?></h3>

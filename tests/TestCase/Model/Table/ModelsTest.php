@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Test\TestCase\Model\Table;
@@ -90,8 +91,8 @@ class ModelsTest extends TestCase
 
     public function testFindUsers(): void
     {
-        $this->_createTestUser('alice', 'Alice Admin', 'admin');
-        $this->_createTestUser('bob', 'Bob Editor', 'editor');
+        $this->createTestUser('alice', 'Alice Admin', 'admin');
+        $this->createTestUser('bob', 'Bob Editor', 'editor');
 
         $users = $this->Users->find()
             ->where(['status !=' => 'deleted'])
@@ -175,7 +176,7 @@ class ModelsTest extends TestCase
 
     public function testPageAssociations(): void
     {
-        $user = $this->_createTestUser('author', 'Author User', 'editor');
+        $user = $this->createTestUser('author', 'Author User', 'editor');
 
         $page = $this->Pages->newEntity([
             'title' => 'Test Page',
@@ -219,7 +220,7 @@ class ModelsTest extends TestCase
 
     public function testUpdateTemplate(): void
     {
-        $tpl = $this->_createTestTemplate('Original', 'active');
+        $tpl = $this->createTestTemplate('Original', 'active');
         $tpl = $this->Templates->patchEntity($tpl, ['title' => 'Updated Title']);
         $result = $this->Templates->save($tpl);
         $this->assertNotFalse($result);
@@ -230,7 +231,7 @@ class ModelsTest extends TestCase
 
     public function testDeleteTemplate(): void
     {
-        $tpl = $this->_createTestTemplate('ToDelete', 'inactive');
+        $tpl = $this->createTestTemplate('ToDelete', 'inactive');
         $result = $this->Templates->delete($tpl);
         $this->assertTrue($result);
         $this->assertNull($this->Templates->find()->where(['id' => $tpl->id])->first());
@@ -272,7 +273,7 @@ class ModelsTest extends TestCase
 
     // ---- Helpers ----
 
-    private function _createTestUser(string $username, string $fullname, string $role): \App\Model\Entity\User
+    private function createTestUser(string $username, string $fullname, string $role): \App\Model\Entity\User
     {
         $user = $this->Users->newEntity([
             'gender' => 'male',
@@ -287,7 +288,7 @@ class ModelsTest extends TestCase
         return $user;
     }
 
-    private function _createTestTemplate(string $title, string $status): \App\Model\Entity\Template
+    private function createTestTemplate(string $title, string $status): \App\Model\Entity\Template
     {
         $tpl = $this->Templates->newEntity([
             'title' => $title,

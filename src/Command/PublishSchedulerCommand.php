@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Command;
 
 use Cake\Command\Command;
@@ -14,7 +16,10 @@ use Cake\I18n\DateTime;
  */
 class PublishSchedulerCommand extends Command
 {
-    public static function defaultName(): string { return 'publish-scheduler'; }
+    public static function defaultName(): string
+    {
+        return 'publish-scheduler';
+    }
 
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
@@ -34,7 +39,10 @@ class PublishSchedulerCommand extends Command
             'status' => 'inactive', 'deleted_at IS' => null,
         ])->all();
         foreach ($toPublish as $p) {
-            $pages->updateAll(['status' => 'active', 'workflow_status' => 'published', 'publish_at' => null], ['id' => $p->id]);
+            $pages->updateAll(
+                ['status' => 'active', 'workflow_status' => 'published', 'publish_at' => null],
+                ['id' => $p->id]
+            );
             $published++;
             $io->out("Published: #{$p->id} {$p->title}");
         }
@@ -45,7 +53,10 @@ class PublishSchedulerCommand extends Command
             'status' => 'active', 'deleted_at IS' => null,
         ])->all();
         foreach ($toExpire as $p) {
-            $pages->updateAll(['status' => 'inactive', 'workflow_status' => 'archived', 'expire_at' => null], ['id' => $p->id]);
+            $pages->updateAll(
+                ['status' => 'inactive', 'workflow_status' => 'archived', 'expire_at' => null],
+                ['id' => $p->id]
+            );
             $expired++;
             $io->out("Expired: #{$p->id} {$p->title}");
         }

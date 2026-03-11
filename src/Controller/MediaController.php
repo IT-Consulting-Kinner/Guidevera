@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Controller;
 
 use Cake\Core\Configure;
@@ -13,16 +15,23 @@ class MediaController extends AppController
     public function index(): ?\Cake\Http\Response
     {
         $this->autoRender = false;
-        if (!$this->hasRole(self::ROLE_EDITOR)) return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        if (!$this->hasRole(self::ROLE_EDITOR)) {
+            return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        }
         $mediaDir = ROOT . DS . 'storage' . DS . 'media' . DS;
-        if (!is_dir($mediaDir)) return $this->jsonSuccess(['files' => []]);
+        if (!is_dir($mediaDir)) {
+            return $this->jsonSuccess(['files' => []]);
+        }
 
         // Load all content for usage scan
-        $pages = $this->fetchTable('Pages')->find()->select(['id', 'title', 'content'])->where(['deleted_at IS' => null])->all();
+        $pages = $this->fetchTable('Pages')->find()->select(['id', 'title',
+            'content'])->where(['deleted_at IS' => null])->all();
 
         $files = [];
         foreach (scandir($mediaDir) as $file) {
-            if ($file[0] === '.' || is_dir($mediaDir . $file)) continue;
+            if ($file[0] === '.' || is_dir($mediaDir . $file)) {
+                continue;
+            }
             $path = $mediaDir . $file;
 
             // Find which pages reference this file
@@ -39,7 +48,7 @@ class MediaController extends AppController
             $files[] = [
                 'name' => $file,
                 'size' => filesize($path),
-                'sizeFormatted' => $this->_formatSize(filesize($path)),
+                'sizeFormatted' => $this->formatSize(filesize($path)),
                 'type' => $ext,
                 'isImage' => $isImage,
                 'uploaded' => date('d.m.Y H:i', filemtime($path)),
@@ -50,26 +59,38 @@ class MediaController extends AppController
         }
 
         // Sort: unused first, then by name
-        usort($files, function($a, $b) { return $a['usageCount'] <=> $b['usageCount'] ?: strcmp($a['name'], $b['name']); });
+        usort($files, function ($a, $b) {
+            return $a['usageCount'] <=> $b['usageCount'] ?: strcmp($a['name'], $b['name']);
+        });
 
-        return $this->jsonSuccess(['files' => $files, 'total' => count($files), 'unused' => count(array_filter($files, fn($f) => $f['usageCount'] === 0))]);
+        return $this->jsonSuccess(['files' => $files, 'total' => count($files), 'unused' =>
+            count(array_filter($files, fn($f) => $f['usageCount'] === 0))]);
     }
 
     public function replace(): ?\Cake\Http\Response
     {
-        $this->request->allowMethod(['post']); $this->autoRender = false;
-        if (!$this->hasRole(self::ROLE_CONTRIBUTOR)) return $this->requireRole(self::ROLE_CONTRIBUTOR) ? null : $this->response;
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+        if (!$this->hasRole(self::ROLE_CONTRIBUTOR)) {
+            return $this->requireRole(self::ROLE_CONTRIBUTOR) ? null : $this->response;
+        }
 
         $oldName = $this->request->getData('old_name', '');
         $file = $this->request->getUploadedFile('file');
-        if (empty($oldName) || !$file) return $this->jsonError('invalid_data');
+        if (empty($oldName) || !$file) {
+            return $this->jsonError('invalid_data');
+        }
 
         $error = \App\Service\UploadService::validate($file);
-        if ($error) return $this->jsonError($error);
+        if ($error) {
+            return $this->jsonError($error);
+        }
 
         $mediaDir = ROOT . DS . 'storage' . DS . 'media' . DS;
         $oldPath = $mediaDir . basename($oldName);
-        if (!file_exists($oldPath)) return $this->jsonError('file_not_found');
+        if (!file_exists($oldPath)) {
+            return $this->jsonError('file_not_found');
+        }
 
         // Replace file, keep same name → all links stay intact
         $file->moveTo($oldPath);
@@ -77,10 +98,14 @@ class MediaController extends AppController
         return $this->jsonSuccess(['success' => true, 'filename' => $oldName]);
     }
 
-    private function _formatSize(int $bytes): string
+    private function formatSize(int $bytes): string
     {
-        if ($bytes >= 1048576) return round($bytes / 1048576, 1) . ' MB';
-        if ($bytes >= 1024) return round($bytes / 1024, 1) . ' KB';
+        if ($bytes >= 1048576) {
+            return round($bytes / 1048576, 1) . ' MB';
+        }
+        if ($bytes >= 1024) {
+            return round($bytes / 1024, 1) . ' KB';
+        }
         return $bytes . ' B';
     }
 }

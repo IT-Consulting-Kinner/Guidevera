@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -27,7 +28,8 @@ use Cake\Validation\Validator;
  *
  * @package App\Model\Table
  * @method \App\Model\Entity\Page newEmptyEntity()
- * @method \App\Model\Entity\Page get(mixed $primaryKey, array|string $finder = 'all', ...\Cake\ORM\Query\SelectQuery $options)
+ * @method \App\Model\Entity\Page get(mixed $primaryKey, array|string $finder = 'all',
+     ...\Cake\ORM\Query\SelectQuery $options)
  */
 class PagesTable extends Table
 {

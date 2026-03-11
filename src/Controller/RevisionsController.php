@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -20,11 +21,18 @@ class RevisionsController extends AppController
      */
     public function index(): ?\Cake\Http\Response
     {
-        $this->request->allowMethod(['post']); $this->autoRender = false;
-        if (!(Configure::read('Manual.enableRevisions') ?? true)) return $this->jsonError('feature_disabled');
-        if (!$this->hasRole(self::ROLE_EDITOR)) return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+        if (!(Configure::read('Manual.enableRevisions') ?? true)) {
+            return $this->jsonError('feature_disabled');
+        }
+        if (!$this->hasRole(self::ROLE_EDITOR)) {
+            return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        }
         $id = (int)$this->request->getData('id', 0);
-        if (!$id) return $this->jsonError('invalid_id');
+        if (!$id) {
+            return $this->jsonError('invalid_id');
+        }
 
         $revisions = $this->fetchTable('PageRevisions')->find()
             ->contain(['CreatedByUsers'])->where(['page_id' => $id])
@@ -46,11 +54,18 @@ class RevisionsController extends AppController
      */
     public function show(): ?\Cake\Http\Response
     {
-        $this->request->allowMethod(['post']); $this->autoRender = false;
-        if (!(Configure::read('Manual.enableRevisions') ?? true)) return $this->jsonError('feature_disabled');
-        if (!$this->hasRole(self::ROLE_EDITOR)) return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+        if (!(Configure::read('Manual.enableRevisions') ?? true)) {
+            return $this->jsonError('feature_disabled');
+        }
+        if (!$this->hasRole(self::ROLE_EDITOR)) {
+            return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        }
         $revId = (int)$this->request->getData('revision_id', 0);
-        if (!$revId) return $this->jsonError('invalid_id');
+        if (!$revId) {
+            return $this->jsonError('invalid_id');
+        }
         try {
             $rev = $this->fetchTable('PageRevisions')->get($revId, contain: ['CreatedByUsers']);
             return $this->jsonSuccess([
@@ -72,11 +87,18 @@ class RevisionsController extends AppController
      */
     public function restore(): ?\Cake\Http\Response
     {
-        $this->request->allowMethod(['post']); $this->autoRender = false;
-        if (!(Configure::read('Manual.enableRevisions') ?? true)) return $this->jsonError('feature_disabled');
-        if (!$this->hasRole(self::ROLE_CONTRIBUTOR)) return $this->requireRole(self::ROLE_CONTRIBUTOR) ? null : $this->response;
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+        if (!(Configure::read('Manual.enableRevisions') ?? true)) {
+            return $this->jsonError('feature_disabled');
+        }
+        if (!$this->hasRole(self::ROLE_CONTRIBUTOR)) {
+            return $this->requireRole(self::ROLE_CONTRIBUTOR) ? null : $this->response;
+        }
         $revId = (int)$this->request->getData('revision_id', 0);
-        if (!$revId) return $this->jsonError('invalid_id');
+        if (!$revId) {
+            return $this->jsonError('invalid_id');
+        }
         try {
             $revTable = $this->fetchTable('PageRevisions');
             $rev = $revTable->get($revId);
@@ -95,8 +117,12 @@ class RevisionsController extends AppController
                 'title' => $rev->title, 'description' => $rev->description,
                 'content' => $rev->content, 'modified_by' => $user['id'] ?? 0,
             ]);
-            if ($pages->save($page)) return $this->jsonSuccess(['intAffectedRows' => 1]);
-        } catch (\Exception $e) { Log::error('Revision restore failed: ' . $e->getMessage()); }
+            if ($pages->save($page)) {
+                return $this->jsonSuccess(['intAffectedRows' => 1]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Revision restore failed: ' . $e->getMessage());
+        }
         return $this->jsonError('can_not_restore');
     }
 }

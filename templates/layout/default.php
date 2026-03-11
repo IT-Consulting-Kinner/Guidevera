@@ -51,7 +51,8 @@ $isAdmin = ($auth['role'] ?? '') === 'admin';
             pages_error_save: '<?= __('Error saving the page!') ?>',
             pages_error_delete: '<?= __('Error deleting the page!') ?>',
             pages_error_has_children: '<?= __('The page cannot be deleted because it contains sub-pages!') ?>',
-            pages_error_show: '<?= __('Error loading the page! It may no longer be available. The main page is loading.') ?>',
+            pages_error_show: '<?= __('Error loading the page! It may no longer be available.
+                The main page is loading.') ?>',
             pages_error_edit: '<?= __('Error loading page for editing! It may no longer be available.') ?>',
             pages_error_status: '<?= __('Error setting the status!') ?>',
             pages_error_tree: '<?= __('Error loading the directory tree!') ?>',
@@ -166,7 +167,8 @@ $isAdmin = ($auth['role'] ?? '') === 'admin';
             display_error();
         }
         function display_error() {
-            if (jQuery('#cover_error').is(':visible') || jQuery('#cover_success').is(':visible')) { setTimeout(display_error, displayMessageOffset); return; }
+            if (jQuery('#cover_error').is(':visible') || jQuery('#cover_success').is(':visible')) {
+                setTimeout(display_error, displayMessageOffset); return; }
             var msg = arrErrorMessage.shift();
             if (!msg) return;
             jQuery('#errortext').html(msg);
@@ -179,7 +181,8 @@ $isAdmin = ($auth['role'] ?? '') === 'admin';
             display_success();
         }
         function display_success() {
-            if (jQuery('#cover_error').is(':visible') || jQuery('#cover_success').is(':visible')) { setTimeout(display_success, displayMessageOffset); return; }
+            if (jQuery('#cover_error').is(':visible') || jQuery('#cover_success').is(':visible')) {
+                setTimeout(display_success, displayMessageOffset); return; }
             var msg = arrSuccessMessage.shift();
             if (!msg) return;
             jQuery('#successtext').html(msg);
@@ -225,13 +228,16 @@ $isAdmin = ($auth['role'] ?? '') === 'admin';
         </a>
         <div class="app-header__spacer"></div>
         <?php if ($public['enableDarkMode'] ?? false): ?>
-        <button class="sidebar-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="<?= __('Toggle dark mode') ?>" style="display:inline-flex;margin-right:0.25rem">
+        <button class="sidebar-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="<?= __('Toggle dark
+            mode') ?>" style="display:inline-flex;margin-right:0.25rem">
             <span class="fas fa-moon" id="darkModeIcon"></span>
         </button>
         <?php endif; ?>
         <?php if ($public['enableFontSize'] ?? false): ?>
-        <button class="sidebar-toggle-btn" onclick="changeFontSize(-1)" title="A-" style="display:inline-flex;margin-right:0;font-size:0.8rem;font-weight:700">A-</button>
-        <button class="sidebar-toggle-btn" onclick="changeFontSize(1)" title="A+" style="display:inline-flex;margin-right:0.25rem;font-size:1.1rem;font-weight:700">A+</button>
+        <button class="sidebar-toggle-btn" onclick="changeFontSize(-1)" title="A-"
+            style="display:inline-flex;margin-right:0;font-size:0.8rem;font-weight:700">A-</button>
+        <button class="sidebar-toggle-btn" onclick="changeFontSize(1)" title="A+"
+            style="display:inline-flex;margin-right:0.25rem;font-size:1.1rem;font-weight:700">A+</button>
         <?php endif; ?>
         <?php if ($isAuth): ?>
         <div class="app-header__user">
@@ -241,17 +247,23 @@ $isAdmin = ($auth['role'] ?? '') === 'admin';
                 <span class="fas fa-chevron-down" style="font-size:0.65rem"></span>
             </div>
             <div class="app-header__dropdown">
-                <a href="javascript:" onclick="load_module('/user/profil')"><span class="fas fa-user-edit"></span> <?= __('Edit profile') ?></a>
+                <a href="javascript:" onclick="load_module('/user/profil')"><span class="fas fa-user-edit"></span>
+                    <?= __('Edit profile') ?></a>
                 <?php if ($isAdmin): ?>
-                <a href="javascript:" onclick="load_module('/user')"><span class="fas fa-users"></span> <?= __('Manage users') ?></a>
-                <a href="javascript:" onclick="load_module('/file')"><span class="fas fa-upload"></span> <?= __('Manage files') ?></a>
+                <a href="javascript:" onclick="load_module('/user')"><span class="fas fa-users"></span> <?=
+                    __('Manage users') ?></a>
+                <a href="javascript:" onclick="load_module('/file')"><span class="fas fa-upload"></span> <?=
+                    __('Manage files') ?></a>
                 <?php endif; ?>
-                <a href="javascript:" onclick="load_module('/pages')"><span class="far fa-file-alt"></span> <?= __('Manage pages') ?></a>
+                <a href="javascript:" onclick="load_module('/pages')"><span class="far fa-file-alt"></span> <?=
+                    __('Manage pages') ?></a>
                 <?php if ($isAdmin && ($public['enablePrint'] ?? false)): ?>
-                <a href="javascript:" onclick="load_module('/pages/print_all', 'blank')"><span class="fas fa-print"></span> <?= __('Print book') ?></a>
+                <a href="javascript:" onclick="load_module('/pages/print_all',
+                    'blank')"><span class="fas fa-print"></span> <?= __('Print book') ?></a>
                 <?php endif; ?>
                 <hr>
-                <a href="javascript:" onclick="load_module('/user/logout')"><span class="fas fa-sign-out-alt"></span> <?= __('Logout user') ?></a>
+                <a href="javascript:" onclick="load_module('/user/logout')"><span class="fas fa-sign-out-alt"></span>
+                    <?= __('Logout user') ?></a>
             </div>
         </div>
         <?php endif; ?>
@@ -286,8 +298,11 @@ $isAdmin = ($auth['role'] ?? '') === 'admin';
     <!-- Cookie Consent Banner -->
     <div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg-surface);border-top:1px solid var(--border-color);padding:1rem 2rem;z-index:9999;box-shadow:0 -2px 8px rgba(0,0,0,0.1);text-align:center">
         <span style="font-size:0.9rem"><?= __('This site uses cookies to ensure the best experience.') ?></span>
-        <button onclick="acceptCookies()" style="margin-left:1rem;padding:0.4rem 1.25rem;background:var(--brand-primary);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:0.85rem"><?= __('Accept') ?></button>
-        <button onclick="rejectCookies()" style="margin-left:0.5rem;padding:0.4rem 1.25rem;background:var(--bg-hover);color:var(--text-primary);border:1px solid var(--border-color);border-radius:var(--radius-sm);cursor:pointer;font-size:0.85rem"><?= __('Reject') ?></button>
+        <button onclick="acceptCookies()" style="margin-left:1rem;padding:0.4rem
+            1.25rem;background:var(--brand-primary);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:0.85rem"><?= __('Accept') ?></button>
+        <button onclick="rejectCookies()" style="margin-left:0.5rem;padding:0.4rem
+            1.25rem;background:var(--bg-hover);color:var(--text-primary);border:1px solid
+                var(--border-color);border-radius:var(--radius-sm);cursor:pointer;font-size:0.85rem"><?= __('Reject') ?></button>
     </div>
     <?php endif; ?>
 </body>

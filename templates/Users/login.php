@@ -12,7 +12,8 @@
         <div class="alert alert-warning">
             <strong><?= __('Initial setup required') ?></strong><br>
             <?= __('No users found. Please run the following command on the server:') ?><br>
-            <code style="display:block;margin:0.5rem 0;padding:0.5rem;background:var(--bg-body);border-radius:var(--radius-sm)">bin/cake install</code>
+            <code style="display:block;margin:0.5rem
+                0;padding:0.5rem;background:var(--bg-body);border-radius:var(--radius-sm)">bin/cake install</code>
         </div>
     <?php else: ?>
     <form method="post">

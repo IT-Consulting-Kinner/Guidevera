@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
@@ -14,6 +13,8 @@ declare(strict_types=1);
  * @since         0.10.8
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
+
+declare(strict_types=1);
 
 /*
  * This file is loaded by your src/Application.php bootstrap method.
@@ -187,7 +188,10 @@ unset($fullBaseUrl);
  * Security salt validation.
  * In production, using the default salt is a security risk.
  */
-if (!Configure::read('debug') && Configure::read('Security.salt') === 'ab65982f846df40f37417be06b12bd942847aa9ee2e5871bb6f2ff1369cc929e') {
+if (
+    !Configure::read('debug') && Configure::read('Security.salt') ===
+    'ab65982f846df40f37417be06b12bd942847aa9ee2e5871bb6f2ff1369cc929e'
+) {
     trigger_error(
         'SECURITY WARNING: Security.salt is still the default value. ' .
         'Set the SECURITY_SALT environment variable to a unique random string. ' .
@@ -227,7 +231,8 @@ ServerRequest::addDetector('tablet', function ($request) {
  * You can enable default locale format parsing by adding calls
  * to `useLocaleParser()`. This enables the automatic conversion of
  * locale specific date formats when processing request data. For details see
- * @link https://book.cakephp.org/5/en/core-libraries/internationalization-and-localization.html#parsing-localized-datetime-data
+ * @link https://book.cakephp.org/5/en/core-libraries/
+ *   internationalization-and-localization.html#parsing-localized-datetime-data
  */
 // \Cake\Database\TypeFactory::build('time')->useLocaleParser();
 // \Cake\Database\TypeFactory::build('date')->useLocaleParser();

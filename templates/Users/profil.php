@@ -19,13 +19,16 @@
             <label class="form-label"><?= __('Salutation') ?></label>
             <select name="gender" class="form-select">
                 <option value="male" <?= ($user->gender ?? '') === 'male' ? 'selected' : '' ?>><?= __('Mr') ?></option>
-                <option value="female" <?= ($user->gender ?? '') === 'female' ? 'selected' : '' ?>><?= __('Ms') ?></option>
+                <option value="female" <?= ($user->gender ?? '') === 'female' ? 'selected' : '' ?>><?= __('Ms')
+                    ?></option>
             </select>
         </div>
         <?php if (\Cake\Core\Configure::read('Manual.enableMentions') ?? false): ?>
         <div class="mb-3 form-check">
-            <input type="checkbox" name="notify_mentions" id="notify_mentions" class="form-check-input" value="1" <?= ($user->notify_mentions ?? 1) ? 'checked' : '' ?>>
-            <label class="form-check-label" for="notify_mentions"><?= __('Notify me when mentioned in comments (@username)') ?></label>
+            <input type="checkbox" name="notify_mentions" id="notify_mentions" class="form-check-input" value="1" <?=
+                ($user->notify_mentions ?? 1) ? 'checked' : '' ?>>
+            <label class="form-check-label" for="notify_mentions"><?= __('Notify me when mentioned in comments
+                (@username)') ?></label>
         </div>
         <?php endif; ?>
         <button type="submit" class="btn btn-primary"><?= __('Save') ?></button>

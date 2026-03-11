@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Service;
 
 use Cake\Core\Configure;
@@ -15,14 +17,18 @@ class WebhookService
 
     public static function fire(string $event, array $payload): void
     {
-        if (!(Configure::read('Manual.enableWebhooks') ?? false)) return;
+        if (!(Configure::read('Manual.enableWebhooks') ?? false)) {
+            return;
+        }
         try {
             $hooks = \Cake\ORM\TableRegistry::getTableLocator()->get('Webhooks')
                 ->find()->where(['active' => 1])->all();
 
             foreach ($hooks as $hook) {
                 $events = array_map('trim', explode(',', $hook->events));
-                if (!in_array($event, $events) && !in_array('*', $events)) continue;
+                if (!in_array($event, $events) && !in_array('*', $events)) {
+                    continue;
+                }
 
                 $body = json_encode(['event' => $event, 'timestamp' => date('c'), 'data' => $payload]);
                 $headers = ['Content-Type: application/json'];
@@ -40,6 +46,8 @@ class WebhookService
                 curl_exec($ch);
                 curl_close($ch);
             }
-        } catch (\Exception $e) { Log::error('Webhook fire failed: ' . $e->getMessage()); }
+        } catch (\Exception $e) {
+            Log::error('Webhook fire failed: ' . $e->getMessage());
+        }
     }
 }

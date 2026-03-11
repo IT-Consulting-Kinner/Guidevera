@@ -1,4 +1,5 @@
 <?php
+
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\RouteBuilder;
 
@@ -26,7 +27,8 @@ return function (RouteBuilder $routes): void {
 
         // Pages: Print
         $b->connect('/pages/print_all', ['controller' => 'Pages', 'action' => 'printAll']);
-        $b->connect('/pages/{id}/print/*', ['controller' => 'Pages', 'action' => 'printPage'], ['id' => '\d+', 'pass' => ['id']]);
+        $b->connect('/pages/{id}/print/*', ['controller' => 'Pages', 'action' => 'printPage'], ['id' => '\d+',
+            'pass' => ['id']]);
 
         // Pages: Dashboard, Trash, Export, Stats, Audit
         $b->connect('/pages/dashboard', ['controller' => 'Pages', 'action' => 'dashboard']);

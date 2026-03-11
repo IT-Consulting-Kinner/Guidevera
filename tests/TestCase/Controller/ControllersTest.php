@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller;
@@ -23,7 +24,10 @@ class ControllersTest extends TestCase
         foreach ($statements as $stmt) {
             $stmt = trim($stmt);
             if (!empty($stmt)) {
-                try { $connection->execute($stmt); } catch (\Exception $e) {}
+                try {
+                    $connection->execute($stmt);
+                } catch (\Exception $e) {
+                }
             }
         }
 
@@ -31,24 +35,35 @@ class ControllersTest extends TestCase
         $salt = \Cake\Core\Configure::read('Security.salt');
         $hashedPw = password_hash(hash_hmac('sha256', 'password123', $salt), PASSWORD_DEFAULT);
         $connection->execute(
-            "INSERT OR IGNORE INTO users (id, gender, username, password, fullname, email, role, change_password, page_tree, status) VALUES (1, 'male', 'admin', '{$hashedPw}', 'Test Admin', 'admin@test.com', 'admin', 0, '', 'active')"
+            "INSERT OR IGNORE INTO users (id, gender, username, password, fullname, email, role, change_password,
+                page_tree, status) VALUES (1, 'male', 'admin', '{$hashedPw}', 'Test Admin', 'admin@test.com', '
+                    admin', 0, '', 'active')"
         );
 
         // Create test pages with tree structure
-        $connection->execute("INSERT OR IGNORE INTO pages (id, parent_id, lft, rght, position, title, content, status, views, created_by, modified_by) VALUES (1, NULL, 1, 6, 1, 'Manual', '<p>Root page</p>', 'active', 5, 1, 1)");
-        $connection->execute("INSERT OR IGNORE INTO pages (id, parent_id, lft, rght, position, title, content, status, views, created_by, modified_by) VALUES (2, 1, 2, 3, 1, 'Chapter 1', '<p>First chapter</p>', 'active', 3, 1, 1)");
-        $connection->execute("INSERT OR IGNORE INTO pages (id, parent_id, lft, rght, position, title, content, status, views, created_by, modified_by) VALUES (3, 1, 4, 5, 2, 'Chapter 2', '<p>Second chapter</p>', 'inactive', 0, 1, 1)");
+        $connection->execute("INSERT OR IGNORE INTO pages (id, parent_id, lft, rght, position, title, content,
+            status, views, created_by, modified_by) VALUES (1, NULL, 1, 6, 1, 'Manual', '<p>Root page</p>', '
+                active', 5, 1, 1)");
+        $connection->execute("INSERT OR IGNORE INTO pages (id, parent_id, lft, rght, position, title, content,
+            status, views, created_by, modified_by) VALUES (2, 1, 2, 3, 1, 'Chapter 1', '<p>First chapter</p>', '
+                active', 3, 1, 1)");
+        $connection->execute("INSERT OR IGNORE INTO pages (id, parent_id, lft, rght, position, title, content,
+            status, views, created_by, modified_by) VALUES (3, 1, 4, 5, 2, 'Chapter 2', '<p>Second chapter</p>', '
+                inactive', 0, 1, 1)");
 
         // Keywords
         $connection->execute("INSERT OR IGNORE INTO pagesindex (id, keyword, page_id) VALUES (1, 'intro', 1)");
         $connection->execute("INSERT OR IGNORE INTO pagesindex (id, keyword, page_id) VALUES (2, 'start', 1)");
 
         // Template
-        $connection->execute("INSERT OR IGNORE INTO templates (id, title, content, status) VALUES (1, 'Standard', '<h1>Title</h1>', 'active')");
+        $connection->execute("INSERT OR IGNORE INTO templates (id, title, content, status) VALUES (1, 'Standard', '
+            <h1>Title</h1>', 'active')");
 
         // Storage directory for files
         $dir = ROOT . DS . 'storage' . DS . 'media';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
 
         // Enable CSRF token for all POST requests
         $this->enableCsrfToken();

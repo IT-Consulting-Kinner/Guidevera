@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Command;
@@ -19,7 +20,10 @@ use Cake\Console\ConsoleOptionParser;
  */
 class QualityCheckCommand extends Command
 {
-    public static function defaultName(): string { return 'quality-check'; }
+    public static function defaultName(): string
+    {
+        return 'quality-check';
+    }
 
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
@@ -64,10 +68,12 @@ class QualityCheckCommand extends Command
                 if (!empty($headings[1])) {
                     $levels = array_map('intval', $headings[1]);
                     // Content shouldn't start with h1 (page title is already h3)
-                    if ($levels[0] === 1) $pageIssues[] = 'Content starts with <h1> (use h2+ instead)';
+                    if ($levels[0] === 1) {
+                        $pageIssues[] = 'Content starts with <h1> (use h2+ instead)';
+                    }
                     // Check for skipped levels (e.g. h2 → h4)
                     for ($i = 1; $i < count($levels); $i++) {
-                        if ($levels[$i] > $levels[$i-1] + 1) {
+                        if ($levels[$i] > $levels[$i - 1] + 1) {
                             $pageIssues[] = "Heading level skipped: h{$levels[$i-1]} → h{$levels[$i]}";
                             break;
                         }
@@ -117,9 +123,13 @@ class QualityCheckCommand extends Command
         $orphaned = [];
         if (is_dir($mediaDir)) {
             $allContent = '';
-            foreach ($pages as $p) $allContent .= $p->content ?? '';
+            foreach ($pages as $p) {
+                $allContent .= $p->content ?? '';
+            }
             foreach (scandir($mediaDir) as $file) {
-                if ($file[0] === '.' || is_dir($mediaDir . $file)) continue;
+                if ($file[0] === '.' || is_dir($mediaDir . $file)) {
+                    continue;
+                }
                 if (strpos($allContent, $file) === false) {
                     $orphaned[] = $file;
                 }
@@ -142,7 +152,10 @@ class QualityCheckCommand extends Command
             if (!empty($orphaned)) {
                 $io->out('');
                 $io->out('<warning>Orphaned media files:</warning>');
-                foreach ($orphaned as $f) { $io->out("  • {$f}"); $issueCount++; }
+                foreach ($orphaned as $f) {
+                    $io->out("  • {$f}");
+                    $issueCount++;
+                }
             }
             $io->out('');
             $io->warning("{$issueCount} issues found across " . count($issues) . " pages.");
@@ -157,21 +170,30 @@ class QualityCheckCommand extends Command
                 foreach ($issues as $data) {
                     $issueCount += count($data['issues']);
                     foreach ($data['issues'] as $i) {
-                        if (str_contains($i, 'Not updated')) $stale++;
-                        if (str_contains($i, 'No description')) $noDesc++;
-                        if (str_contains($i, 'empty or very short')) $empty++;
+                        if (str_contains($i, 'Not updated')) {
+                            $stale++;
+                        }
+                        if (str_contains($i, 'No description')) {
+                            $noDesc++;
+                        }
+                        if (str_contains($i, 'empty or very short')) {
+                            $empty++;
+                        }
                     }
                 }
                 \Cake\Cache\Cache::write('quality_check_results', [
                     'timestamp' => date('Y-m-d H:i:s'),
-                    'summary' => ['stale' => $stale, 'noDescription' => $noDesc, 'emptyContent' => $empty, 'totalIssues' => $issueCount],
+                    'summary' => ['stale' => $stale, 'noDescription' => $noDesc, 'emptyContent' => $empty,
+                        'totalIssues' => $issueCount],
                     'issues' => $issues,
                     'orphaned' => $orphaned,
                     'pageCount' => $pageCount,
                 ]);
                 $io->out('Results cached for dashboard display.');
             }
-        } catch (\Exception $e) { /* Cache not available */ }
+        } catch (\Exception $e) {
+/* Cache not available */
+        }
 
         return self::CODE_SUCCESS;
     }

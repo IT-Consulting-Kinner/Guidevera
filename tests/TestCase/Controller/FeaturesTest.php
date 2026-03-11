@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller;
@@ -383,7 +384,8 @@ class FeaturesTest extends TestCase
         $this->post('/pages/review_decision', ['review_id' => 1, 'decision' => 'approved']);
         $body = json_decode((string)$this->_response->getBody(), true);
         // Should fail (not_found or insufficient_permissions)
-        $this->assertContains($body['error'] ?? $body['status'] ?? '', ['not_found', 'insufficient_permissions', 'approved']);
+        $this->assertContains($body['error'] ?? $body['status'] ?? '', ['not_found', 'insufficient_permissions',
+            'approved']);
     }
 
     public function testReviewDecisionRejectsWithoutComment(): void

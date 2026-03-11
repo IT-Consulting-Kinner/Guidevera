@@ -5,6 +5,7 @@ use Cake\Database\Connection;
 use Cake\Database\Driver\Mysql;
 use Cake\Log\Engine\FileLog;
 use Cake\Mailer\Transport\MailTransport;
+
 use function Cake\Core\env;
 
 return [
@@ -469,7 +470,8 @@ return [
      * ## Options
      *
      *  - `errorLevel` - Defaults to `E_ALL`. Can be set to `false` to disable overwrite error level.
-     *  - `fixtureStrategy` - Defaults to TruncateStrategy. Can be set to any class implementing FixtureStrategyInterface.
+     *  - `fixtureStrategy` - Defaults to TruncateStrategy. Can be set to any class implementing
+         FixtureStrategyInterface.
      */
     'TestSuite' => [
         'errorLevel' => null,

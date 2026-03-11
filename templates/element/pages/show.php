@@ -21,7 +21,8 @@ $dir = ($public['textDirection'] ?? 'ltr') === 'rtl' ? 'rtl' : 'ltr';
 $baseUri = $public['baseUri'] ?? '/';
 $pageUrl = $baseUri . 'pages/' . $id . '/' . urlencode($page->title ?? '');
 ?>
-<form id="print_page" action="/pages/<?= $id ?>/print/<?= urlencode($page->title ?? '') ?>" method="get" target="_blank"></form>
+<form id="print_page" action="/pages/<?= $id ?>/print/<?= urlencode($page->title ?? '') ?>" method="get"
+    target="_blank"></form>
 <div id="modal_link" style="display:none" title="<?= __('Copy link') ?>">
     <p><input id="modal_link_input" style="width:100%;padding:0.5em" type="text" value=""></p>
 </div>
@@ -43,15 +44,19 @@ function load_dialog(url) {
 <div id="content_actions" class="row border-bottom bg-light justify-content-between">
     <div class="col-auto py-2">
         <?php if ($isAuth): ?>
-            <span onclick="post_page_edit(<?= $id ?>)" title="<?= __('Edit page') ?>" class="fas fa-edit border border-dark p-2 m-2"></span>
+            <span onclick="post_page_edit(<?= $id ?>)" title="<?= __('Edit page') ?>" class="fas fa-edit border
+                border-dark p-2 m-2"></span>
         <?php elseif ($public['showLoginButton'] ?? true): ?>
-            <span onclick="window.location.href='/user/login?page_id=<?= $id ?>'" title="<?= __('Login') ?>" class="fas fa-sign-in-alt border border-dark p-2 m-2"></span>
+            <span onclick="window.location.href='/user/login?page_id=<?= $id ?>'" title="<?= __('Login') ?>"
+                class="fas fa-sign-in-alt border border-dark p-2 m-2"></span>
         <?php endif; ?>
         <?php if ($public['showLinkButton'] ?? true): ?>
-            <span onclick="jQuery('#modal_link').dialog('open')" title="<?= __('Copy link') ?>" class="fas fa-link border border-dark p-2 m-2"></span>
+            <span onclick="jQuery('#modal_link').dialog('open')" title="<?= __('Copy link') ?>" class="fas fa-link
+                border border-dark p-2 m-2"></span>
         <?php endif; ?>
         <?php if ($public['enablePrint'] ?? false): ?>
-            <span onclick="jQuery('#print_page').submit()" title="<?= __('Print page') ?>" class="fas fa-print border border-dark p-2 m-2"></span>
+            <span onclick="jQuery('#print_page').submit()" title="<?= __('Print page') ?>" class="fas fa-print border
+                border-dark p-2 m-2"></span>
         <?php endif; ?>
     </div>
     <?php if ($isAuth || ($public['showAuthorDetails'] ?? true)): ?>

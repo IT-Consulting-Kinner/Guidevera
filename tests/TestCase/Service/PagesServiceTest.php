@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Test\TestCase\Service;
@@ -61,7 +62,7 @@ class PagesServiceTest extends TestCase
 
     public function testChapterNumberingWithNumbering(): void
     {
-        $pages = $this->_buildPageTree();
+        $pages = $this->buildPageTree();
         $result = PagesService::calculateChapterNumbering($pages, true);
         // Root page should have chapter number
         $this->assertStringContainsString('1', $result[0]['title'] ?? $result[0]->title ?? '');
@@ -69,7 +70,7 @@ class PagesServiceTest extends TestCase
 
     public function testChapterNumberingWithoutNumbering(): void
     {
-        $pages = $this->_buildPageTree();
+        $pages = $this->buildPageTree();
         $result = PagesService::calculateChapterNumbering($pages, false);
         // Without numbering, title should not have chapter prefix
         $firstTitle = $result[0]['title'] ?? $result[0]->title ?? '';
@@ -156,7 +157,7 @@ class PagesServiceTest extends TestCase
 
     // ── Helper ──
 
-    private function _buildPageTree(): array
+    private function buildPageTree(): array
     {
         return [
             ['id' => 1, 'title' => 'Root', 'parent_id' => 0, 'status' => 'active'],

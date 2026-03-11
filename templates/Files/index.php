@@ -36,7 +36,8 @@ $isAuth = !empty($auth['id']);
     </div>
     <div id="filelist_body">
         <?php if (empty($files)): ?>
-            <div id="drop_hint" class="text-center text-muted p-4"><?= __('No files available. Drag files here to upload.') ?></div>
+            <div id="drop_hint" class="text-center text-muted p-4"><?= __('No files available.
+                Drag files here to upload.') ?></div>
         <?php else: ?>
             <?php foreach ($files as $f): ?>
             <div class="row py-1 border-bottom" id="file_<?= md5($f['name']) ?>">
@@ -46,7 +47,8 @@ $isAuth = !empty($auth['id']);
                 <div class="col-1 text-end"><?= $f['views'] ?></div>
                 <?php if ($isAuth): ?>
                 <div class="col-2 text-center">
-                    <button class="btn btn-sm btn-outline-danger" onclick="file_delete('<?= h($f['name']) ?>')"><span class="fas fa-trash-alt"></span></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="file_delete('<?= h($f['name']) ?>')"><span
+                        class="fas fa-trash-alt"></span></button>
                 </div>
                 <?php endif; ?>
             </div>
@@ -75,11 +77,14 @@ function do_upload(objFileItem) {
                 var strName = d.filename || objFileItem.name;
                 var strEscName = jQuery('<span>').text(strName).html();
                 var strRow = '<div class="row py-1 border-bottom" id="file_' + d.hash + '">'
-                    + '<div class="col-5"><a href="/downloads/' + encodeURIComponent(strName) + '">' + strEscName + '</a></div>'
+                    + '<div class="col-5"><a href="/downloads/' + encodeURIComponent(strName) + '">' + strEscName +
+                        '</a></div>'
                     + '<div class="col-2 text-end">' + (d.size || '') + '</div>'
                     + '<div class="col-2 text-center">' + (d.date || '') + '</div>'
                     + '<div class="col-1 text-end">0</div>'
-                    + '<div class="col-2 text-center"><button class="btn btn-sm btn-outline-danger" onclick="file_delete(\'' + strEscName.replace(/'/g, "\\'") + '\')"><span class="fas fa-trash-alt"></span></button></div>'
+                    + '<div class="col-2 text-center"><button class="btn btn-sm btn-outline-danger"
+                        onclick="file_delete(\'' + strEscName.replace(/'/g,
+                            "\\'") + '\')"><span class="fas fa-trash-alt"></span></button></div>'
                     + '</div>';
                 jQuery('#filelist_body').append(strRow);
                 show_success(t.file_uploaded);
@@ -102,7 +107,8 @@ function file_delete(strFilename) {
                     jQuery(this).fadeOut(300, function() {
                         jQuery(this).remove();
                         if (jQuery('#filelist_body .row').length == 0) {
-                            jQuery('#filelist_body').html('<div id="drop_hint" class="text-center text-muted p-4"><?= __('No files available. Drag files here to upload.') ?></div>');
+                            jQuery('#filelist_body').html('<div id="drop_hint" class="text-center text-muted p-4"><?=
+                                __('No files available. Drag files here to upload.') ?></div>');
                         }
                     });
                 }

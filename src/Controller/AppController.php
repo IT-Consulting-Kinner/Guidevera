@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -51,7 +52,9 @@ class AppController extends Controller
         $this->set('public', Configure::read('Manual') ?? []);
 
         $token = $this->request->getAttribute('csrfToken');
-        if ($token) $this->set('csrfToken', $token);
+        if ($token) {
+            $this->set('csrfToken', $token);
+        }
     }
 
     // ── Auth Helpers ──
@@ -66,11 +69,15 @@ class AppController extends Controller
      */
     protected function hasRole(string $minRole): bool
     {
-        if (!$this->isLoggedIn()) return $minRole === self::ROLE_GUEST;
+        if (!$this->isLoggedIn()) {
+            return $minRole === self::ROLE_GUEST;
+        }
         $userRole = $this->request->getSession()->read('Auth.role') ?? self::ROLE_EDITOR;
         $userLevel = array_search($userRole, self::ROLES);
         $minLevel = array_search($minRole, self::ROLES);
-        if ($userLevel === false || $minLevel === false) return false;
+        if ($userLevel === false || $minLevel === false) {
+            return false;
+        }
         return $userLevel >= $minLevel;
     }
 
@@ -101,14 +108,22 @@ class AppController extends Controller
      */
     protected function requireRole(string $role): bool
     {
-        if ($this->hasRole($role)) return true;
+        if ($this->hasRole($role)) {
+            return true;
+        }
         if (!$this->isLoggedIn()) {
-            if ($this->request->is('ajax')) { $this->response = $this->jsonError('not_authenticated'); return false; }
+            if ($this->request->is('ajax')) {
+                $this->response = $this->jsonError('not_authenticated');
+                return false;
+            }
             $this->redirect('/user/login');
             return false;
         }
         // Logged in but insufficient role
-        if ($this->request->is('ajax')) { $this->response = $this->jsonError('insufficient_permissions'); return false; }
+        if ($this->request->is('ajax')) {
+            $this->response = $this->jsonError('insufficient_permissions');
+            return false;
+        }
         $this->Flash->error(__('You do not have permission for this action.'));
         $this->redirect('/');
         return false;
@@ -118,7 +133,9 @@ class AppController extends Controller
 
     protected function audit(string $action, string $entityType, int $entityId, string $details = ''): void
     {
-        if (!(Configure::read('Manual.enableAuditLog') ?? false)) return;
+        if (!(Configure::read('Manual.enableAuditLog') ?? false)) {
+            return;
+        }
         try {
             $tbl = $this->fetchTable('AuditLog');
             $tbl->save($tbl->newEntity([
@@ -127,7 +144,9 @@ class AppController extends Controller
                 'entity_id' => $entityId, 'details' => mb_substr($details, 0, 2000),
                 'ip_address' => $this->request->clientIp(),
             ]));
-        } catch (\Exception $e) { Log::error('Audit log failed: ' . $e->getMessage()); }
+        } catch (\Exception $e) {
+            Log::error('Audit log failed: ' . $e->getMessage());
+        }
     }
 
 
@@ -136,7 +155,9 @@ class AppController extends Controller
     protected function sendNotification(string $subject, string $body): void
     {
         $email = Configure::read('Manual.notifyEmail');
-        if (empty($email)) return;
+        if (empty($email)) {
+            return;
+        }
         try {
             $mailer = new \Cake\Mailer\Mailer();
             $mailer->setTo($email)->setSubject('[Manual] ' . $subject)->deliver($body);

@@ -22,39 +22,52 @@
         <tbody>
         <?php foreach ($users as $user): ?>
             <tr id="user_row_<?= $user->id ?>">
-                <td><img src="/img/<?= h($user->gender ?? 'male') ?>.png" height="20" id="user_img_<?= $user->id ?>"></td>
+                <td><img src="/img/<?= h($user->gender ?? 'male') ?>.png" height="20" id="user_img_<?= $user->id
+                    ?>"></td>
                 <td>
                     <span class="user_display_<?= $user->id ?>"><?= h($user->fullname) ?></span>
-                    <input type="text" class="form-control form-control-sm user_edit_<?= $user->id ?>" style="display:none" value="<?= h($user->fullname) ?>" data-field="fullname" data-id="<?= $user->id ?>">
+                    <input type="text" class="form-control form-control-sm user_edit_<?= $user->id ?>"
+                        style="display:none" value="<?= h($user->fullname) ?>" data-field="fullname" data-id="<?=
+                            $user->id ?>">
                 </td>
                 <td>
                     <span class="user_display_<?= $user->id ?>"><?= h($user->username) ?></span>
-                    <input type="text" class="form-control form-control-sm user_edit_<?= $user->id ?>" style="display:none" value="<?= h($user->username) ?>" data-field="username" data-id="<?= $user->id ?>">
+                    <input type="text" class="form-control form-control-sm user_edit_<?= $user->id ?>"
+                        style="display:none" value="<?= h($user->username) ?>" data-field="username" data-id="<?=
+                            $user->id ?>">
                 </td>
                 <td>
                     <span class="user_display_<?= $user->id ?>"><?= h($user->email) ?></span>
-                    <input type="email" class="form-control form-control-sm user_edit_<?= $user->id ?>" style="display:none" value="<?= h($user->email) ?>" data-field="email" data-id="<?= $user->id ?>">
+                    <input type="email" class="form-control form-control-sm user_edit_<?= $user->id ?>"
+                        style="display:none" value="<?= h($user->email) ?>" data-field="email" data-id="<?= $user->id
+                            ?>">
                 </td>
                 <td>
                     <span class="user_display_<?= $user->id ?>"><?= h($user->role) ?></span>
-                    <select class="form-select form-select-sm user_edit_<?= $user->id ?>" style="display:none" data-field="role" data-id="<?= $user->id ?>">
+                    <select class="form-select form-select-sm user_edit_<?= $user->id ?>" style="display:none"
+                        data-field="role" data-id="<?= $user->id ?>">
                         <option value="user" <?= $user->role === 'user' ? 'selected' : '' ?>>User</option>
                         <option value="admin" <?= $user->role === 'admin' ? 'selected' : '' ?>>Admin</option>
                     </select>
                 </td>
                 <td>
                     <span class="user_display_<?= $user->id ?>"><?= h($user->status) ?></span>
-                    <select class="form-select form-select-sm user_edit_<?= $user->id ?>" style="display:none" data-field="status" data-id="<?= $user->id ?>">
+                    <select class="form-select form-select-sm user_edit_<?= $user->id ?>" style="display:none"
+                        data-field="status" data-id="<?= $user->id ?>">
                         <option value="active" <?= $user->status === 'active' ? 'selected' : '' ?>>Active</option>
                         <option value="inactive" <?= $user->status === 'inactive' ? 'selected' : '' ?>>Inactive</option>
                     </select>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary user_display_<?= $user->id ?>" onclick="user_edit(<?= $user->id ?>)"><span class="fas fa-edit"></span></button>
-                    <button class="btn btn-sm btn-outline-success user_edit_<?= $user->id ?>" style="display:none" onclick="user_save(<?= $user->id ?>)"><span class="fas fa-save"></span></button>
-                    <button class="btn btn-sm btn-outline-secondary user_edit_<?= $user->id ?>" style="display:none" onclick="user_cancel(<?= $user->id ?>)"><span class="fas fa-times"></span></button>
+                    <button class="btn btn-sm btn-outline-primary user_display_<?= $user->id ?>"
+                        onclick="user_edit(<?= $user->id ?>)"><span class="fas fa-edit"></span></button>
+                    <button class="btn btn-sm btn-outline-success user_edit_<?= $user->id ?>" style="display:none"
+                        onclick="user_save(<?= $user->id ?>)"><span class="fas fa-save"></span></button>
+                    <button class="btn btn-sm btn-outline-secondary user_edit_<?= $user->id ?>" style="display:none"
+                        onclick="user_cancel(<?= $user->id ?>)"><span class="fas fa-times"></span></button>
                     <?php if ($user->id !== ($auth['id'] ?? 0)): ?>
-                        <button class="btn btn-sm btn-outline-danger user_display_<?= $user->id ?>" onclick="user_delete(<?= $user->id ?>)"><span class="fas fa-trash-alt"></span></button>
+                        <button class="btn btn-sm btn-outline-danger user_display_<?= $user->id ?>"
+                            onclick="user_delete(<?= $user->id ?>)"><span class="fas fa-trash-alt"></span></button>
                     <?php endif; ?>
                 </td>
             </tr>
