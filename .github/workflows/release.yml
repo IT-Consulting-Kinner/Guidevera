@@ -88,6 +88,12 @@ jobs:
         run: |
           cat > config/app_local.php <<'PHP'
           <?php
+
+            /**
+             * All configuration is in app.php.
+             * This file exists only because CakePHP expects it.
+             */
+
           declare(strict_types=1);
 
           use Cake\Database\Connection;
