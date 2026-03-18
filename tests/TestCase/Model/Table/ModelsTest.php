@@ -172,42 +172,31 @@ class ModelsTest extends TestCase
         );
     }
 
-    public function testPageAssociations(): void
-    {
-        $user = $this->createTestUser(
-            'author',
-            'Author User',
-            'editor'
-        );
+	public function testPageAssociations(): void
+	{
+		$user = $this->createTestUser('author', 'Author User', 'editor');
 
-        $page = $this->Pages->newEntity([
-            'title' => 'Test Page',
-            'content' => '<p>Content</p>',
-            'status' => 'active',
-            'created_by' => $user->id,
-            'modified_by' => $user->id,
-        ]);
+		$page = $this->Pages->newEmptyEntity();
+		$page->set('title', 'Test Page');
+		$page->set('content', '<p>Content</p>');
+		$page->set('status', 'active', ['guard' => false]);
+		$page->set('created_by', $user->id, ['guard' => false]);
+		$page->set('modified_by', $user->id, ['guard' => false]);
 
-        $saved = $this->Pages->save($page);
-        $this->assertNotFalse($saved);
-        $this->assertNotEmpty($saved->id);
+		$saved = $this->Pages->save($page);
+		$this->assertNotFalse($saved);
+		$this->assertNotEmpty($saved->id);
 
-        $found = $this->Pages->find()
-            ->contain(['CreatedByUsers', 'ModifiedByUsers'])
-            ->where(['Pages.id' => $saved->id])
-            ->firstOrFail();
+		$found = $this->Pages->find()
+			->contain(['CreatedByUsers', 'ModifiedByUsers'])
+			->where(['Pages.id' => $saved->id])
+			->firstOrFail();
 
-        $this->assertNotNull($found->creator);
-        $this->assertNotNull($found->modifier);
-        $this->assertEquals(
-            'Author User',
-            $found->creator->fullname
-        );
-        $this->assertEquals(
-            'Author User',
-            $found->modifier->fullname
-        );
-    }
+		$this->assertNotNull($found->creator);
+		$this->assertNotNull($found->modifier);
+		$this->assertEquals('Author User', $found->creator->fullname);
+		$this->assertEquals('Author User', $found->modifier->fullname);
+	}
 
     public function testPageValidation(): void
     {
