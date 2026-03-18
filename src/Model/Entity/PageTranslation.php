@@ -13,6 +13,6 @@ class PageTranslation extends Entity
 {
     protected array $_accessible = [
         'page_id' => true, 'locale' => true, 'title' => true,
-        'description' => true, 'content' => true, 'modified_by' => true,
+        'description' => true, 'content' => true, 'modified_by' => false,
     ];
 }

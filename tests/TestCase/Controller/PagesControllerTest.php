@@ -28,53 +28,49 @@ class PagesControllerTest extends TestCase
     {
         $this->post('/pages/edit', ['id' => 1]);
         $code = $this->_response->getStatusCode();
-        // Unauthenticated: JSON error (200) or redirect to login (302)
-        $this->assertTrue(
-            $code === 200 || $code === 302,
-            "Expected 200 or 302, got {$code}"
-        );
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testCreateRequiresAuth(): void
     {
         $this->post('/pages/create');
         $code = $this->_response->getStatusCode();
-        $this->assertTrue($code === 200 || $code === 302, "Expected 200 or 302, got {$code}");
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testSaveRequiresAuth(): void
     {
         $this->post('/pages/save', ['id' => 1, 'title' => 'Test']);
         $code = $this->_response->getStatusCode();
-        $this->assertTrue($code === 200 || $code === 302, "Expected 200 or 302, got {$code}");
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testDeleteRequiresAuth(): void
     {
         $this->post('/pages/delete', ['id' => 1]);
         $code = $this->_response->getStatusCode();
-        $this->assertTrue($code === 200 || $code === 302, "Expected 200 or 302, got {$code}");
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testSetStatusRequiresAuth(): void
     {
         $this->post('/pages/set_status', ['id' => 1, 'status' => 'active']);
         $code = $this->_response->getStatusCode();
-        $this->assertTrue($code === 200 || $code === 302, "Expected 200 or 302, got {$code}");
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testUpdateOrderRequiresAuth(): void
     {
         $this->post('/pages/update_order', ['strPages' => '']);
         $code = $this->_response->getStatusCode();
-        $this->assertTrue($code === 200 || $code === 302, "Expected 200 or 302, got {$code}");
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testBrowseRequiresAuth(): void
     {
         $this->post('/pages/browse');
         $code = $this->_response->getStatusCode();
-        $this->assertTrue($code === 200 || $code === 302, "Expected 200 or 302, got {$code}");
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     // ── Show endpoint (public) ──
@@ -85,12 +81,10 @@ class PagesControllerTest extends TestCase
         $this->assertResponseOk();
         $body = json_decode((string)$this->_response->getBody(), true);
         // Should contain page data fields
-        if (!isset($body['error'])) {
-            $this->assertArrayHasKey('id', $body);
-            $this->assertArrayHasKey('title', $body);
-            $this->assertArrayHasKey('content', $body);
-            $this->assertArrayHasKey('status', $body);
-        }
+        $this->assertArrayHasKey('id', $body, 'Response should contain page id');
+        $this->assertArrayHasKey('title', $body, 'Response should contain page title');
+        $this->assertArrayHasKey('content', $body, 'Response should contain page content');
+        $this->assertArrayHasKey('status', $body, 'Response should contain page status');
     }
 
     public function testShowInvalidId(): void
@@ -145,9 +139,7 @@ class PagesControllerTest extends TestCase
         $this->get('/pages/index');
         $this->assertResponseOk();
         $body = json_decode((string)$this->_response->getBody(), true);
-        if ($body !== null) {
-            $this->assertArrayHasKey('indexes', $body);
-        }
+        $this->assertArrayHasKey('indexes', $body, 'Response should contain indexes');
     }
 
     // ── HTTP method enforcement ──

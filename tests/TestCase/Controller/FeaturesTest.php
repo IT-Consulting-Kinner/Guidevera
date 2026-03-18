@@ -8,7 +8,7 @@ use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 
 /**
- * Feature Tests — covers all new v7/v8 features.
+ * Feature Tests — covers all features including fixes from v7–v11.
  */
 class FeaturesTest extends TestCase
 {
@@ -17,16 +17,26 @@ class FeaturesTest extends TestCase
     protected array $fixtures = [
         'app.Pages', 'app.Users', 'app.Pagesindex',
         'app.PageRevisions', 'app.PageTranslations', 'app.PageFeedback',
+        'app.PageTags',
     ];
 
     public function setUp(): void
     {
         parent::setUp();
         $this->enableCsrfToken();
-        // Set AJAX header so controllers return JSON instead of redirecting
         $this->configRequest([
             'headers' => ['X-Requested-With' => 'XMLHttpRequest'],
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        \Cake\Core\Configure::write('Manual.enableRevisions', true);
+        \Cake\Core\Configure::write('Manual.enableFeedback', true);
+        \Cake\Core\Configure::write('Manual.enableTranslations', false);
+        \Cake\Core\Configure::write('Manual.enableSmartLinks', false);
+        \Cake\Core\Configure::write('Manual.showNavigationRoot', true);
     }
 
     // ── Roles ──
@@ -78,7 +88,76 @@ class FeaturesTest extends TestCase
         $this->assertContains($body['error'] ?? '', ['insufficient_permissions', 'feature_disabled']);
     }
 
-    // ── Revisions (feature toggle) ──
+    // ── Page status toggle (show mode, fix v7+) ──
+
+    public function testContributorCanSetStatusActive(): void
+    {
+        $this->session(['Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test']]);
+        $this->post('/pages/set_status', ['id' => 3, 'status' => 'active']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals(1, $body['intAffectedRows'] ?? 0);
+    }
+
+    public function testContributorCanSetStatusInactive(): void
+    {
+        $this->session(['Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test']]);
+        $this->post('/pages/set_status', ['id' => 1, 'status' => 'inactive']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals(1, $body['intAffectedRows'] ?? 0);
+    }
+
+    public function testEditorCannotSetStatus(): void
+    {
+        $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
+        $this->post('/pages/set_status', ['id' => 1, 'status' => 'inactive']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertArrayHasKey('error', $body);
+    }
+
+    public function testSetStatusInvalidValueRejected(): void
+    {
+        $this->session(['Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test']]);
+        $this->post('/pages/set_status', ['id' => 1, 'status' => 'bogus']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('invalid_status', $body['error'] ?? '');
+    }
+
+    // ── showNavigationRoot (fix v4+) ──
+
+    public function testShowNavigationRootFalseHidesRootFromTree(): void
+    {
+        \Cake\Core\Configure::write('Manual.showNavigationRoot', false);
+        $this->post('/pages/get_tree');
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertIsArray($body['arrTree'] ?? []);
+    }
+
+    // ── New page workflow_status (fix v3) ──
+
+    public function testNewPageWithoutWorkflowIsPublished(): void
+    {
+        \Cake\Core\Configure::write('Manual.enableReviewProcess', false);
+        $this->session(['Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test']]);
+        $this->post('/pages/create');
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertArrayHasKey('intId', $body);
+        $page = $this->getTableLocator()->get('Pages')->get($body['intId']);
+        $this->assertEquals('published', $page->workflow_status);
+    }
+
+    public function testNewPageWithWorkflowIsDraft(): void
+    {
+        \Cake\Core\Configure::write('Manual.enableReviewProcess', true);
+        $this->session(['Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test']]);
+        $this->post('/pages/create');
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertArrayHasKey('intId', $body);
+        $page = $this->getTableLocator()->get('Pages')->get($body['intId']);
+        $this->assertEquals('draft', $page->workflow_status);
+        \Cake\Core\Configure::write('Manual.enableReviewProcess', false);
+    }
+
+    // ── Revisions ──
 
     public function testRevisionsDisabledReturnsFeatureDisabled(): void
     {
@@ -98,7 +177,7 @@ class FeaturesTest extends TestCase
         $this->assertArrayHasKey('revisions', $body);
     }
 
-    // ── Feedback (feature toggle) ──
+    // ── Feedback ──
 
     public function testFeedbackDisabledReturnsError(): void
     {
@@ -133,16 +212,15 @@ class FeaturesTest extends TestCase
         $this->assertEquals('pending', $fb->status);
     }
 
-    public function testFeedbackWithoutCommentAutoApproved(): void
+    public function testFeedbackRejectsInactivePage(): void
     {
         \Cake\Core\Configure::write('Manual.enableFeedback', true);
-        $this->post('/pages/feedback', ['page_id' => 1, 'rating' => 1]);
+        $this->post('/pages/feedback', ['page_id' => 3, 'rating' => 1]);
         $body = json_decode((string)$this->_response->getBody(), true);
-        // Verify feedback was accepted (success or saved)
-        $this->assertNotEquals('feature_disabled', $body['error'] ?? 'ok');
+        $this->assertEquals('page_not_active', $body['error'] ?? '');
     }
 
-    // ── Print (feature toggle) ──
+    // ── Print ──
 
     public function testPrintDisabledRedirects(): void
     {
@@ -159,12 +237,29 @@ class FeaturesTest extends TestCase
         $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
         $this->post('/pages/edit', ['id' => 1]);
         $body = json_decode((string)$this->_response->getBody(), true);
-        // With translations disabled, availableLocales should be empty or absent
         $locales = $body['availableLocales'] ?? [];
         $this->assertTrue(empty($locales) || $locales === ['en']);
     }
 
-    // ── Search Mode ──
+    public function testTranslationStatusDisabled(): void
+    {
+        \Cake\Core\Configure::write('Manual.enableTranslations', false);
+        $this->get('/pages/translation_status');
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('feature_disabled', $body['error'] ?? '');
+    }
+
+    // ── Locale detection (fix v22) ──
+
+    public function testLocaleFromQueryParam(): void
+    {
+        $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
+        $this->post('/pages/edit', ['id' => 1, 'locale' => 'en']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('en', $body['locale'] ?? '');
+    }
+
+    // ── Search ──
 
     public function testSearchReturnsSearchMode(): void
     {
@@ -173,19 +268,29 @@ class FeaturesTest extends TestCase
         $this->assertContains($body['searchMode'] ?? '', ['fulltext', 'like']);
     }
 
+    public function testSearchReturnsSnippets(): void
+    {
+        $this->post('/pages/search', ['search' => 'test']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        if (!empty($body['results'])) {
+            $this->assertArrayHasKey('snippet', $body['results'][0]);
+        }
+        $this->assertContains($body['searchMode'] ?? '', ['fulltext', 'like']);
+    }
+
     // ── Cache Invalidation ──
 
     public function testCacheInvalidatedOnCreate(): void
     {
         $this->session(['Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test']]);
-        // Create page successfully
         $this->post('/pages/create');
         $body = json_decode((string)$this->_response->getBody(), true);
-        // Verify page was created
         $this->assertArrayHasKey('intId', $body);
+        $cached = \Cake\Cache\Cache::read('numbered_pages', 'default');
+        $this->assertNull($cached, 'Cache should be invalidated after page creation');
     }
 
-    // ── v10: Workflow ──
+    // ── Workflow ──
 
     public function testSetWorkflowStatusRequiresContributor(): void
     {
@@ -211,7 +316,7 @@ class FeaturesTest extends TestCase
         $this->assertEquals('invalid_workflow_status', $body['error'] ?? '');
     }
 
-    // ── v10: Tags ──
+    // ── Tags ──
 
     public function testSaveTagsDeduplicated(): void
     {
@@ -225,11 +330,10 @@ class FeaturesTest extends TestCase
     {
         $this->post('/pages/related', ['page_id' => 999]);
         $body = json_decode((string)$this->_response->getBody(), true);
-        $related = $body['related'] ?? [];
-        $this->assertIsArray($related);
+        $this->assertIsArray($body['related'] ?? []);
     }
 
-    // ── v10: Quality ──
+    // ── Quality Report ──
 
     public function testQualityReportRequiresAdmin(): void
     {
@@ -247,19 +351,7 @@ class FeaturesTest extends TestCase
         $this->assertArrayHasKey('quality', $body);
     }
 
-    // ── v10: Search with filters ──
-
-    public function testSearchReturnsSnippets(): void
-    {
-        $this->post('/pages/search', ['search' => 'test']);
-        $body = json_decode((string)$this->_response->getBody(), true);
-        if (!empty($body['results'])) {
-            $this->assertArrayHasKey('snippet', $body['results'][0]);
-        }
-        $this->assertContains($body['searchMode'] ?? '', ['fulltext', 'like']);
-    }
-
-    // ── v10: Review Queue ──
+    // ── Review Queue ──
 
     public function testReviewQueueRequiresContributor(): void
     {
@@ -269,7 +361,7 @@ class FeaturesTest extends TestCase
         $this->assertContains($body['error'] ?? '', ['insufficient_permissions', 'not_authenticated']);
     }
 
-    // ── v11: Subscriptions ──
+    // ── Subscriptions ──
 
     public function testSubscribeToggle(): void
     {
@@ -288,7 +380,7 @@ class FeaturesTest extends TestCase
         $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
-    // ── v11: Acknowledgements ──
+    // ── Acknowledgements (locale-aware, fix v25) ──
 
     public function testAcknowledgeDisabled(): void
     {
@@ -308,7 +400,32 @@ class FeaturesTest extends TestCase
         $this->assertTrue($body['acknowledged'] ?? false);
     }
 
-    // ── v11: Inline Comments ──
+    public function testAcknowledgeRejectsInactivePage(): void
+    {
+        \Cake\Core\Configure::write('Manual.enableAcknowledgements', true);
+        $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
+        $this->post('/pages/acknowledge', ['page_id' => 3]);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('page_not_active', $body['error'] ?? '');
+    }
+
+    public function testAcknowledgeIsLocaleSpecific(): void
+    {
+        \Cake\Core\Configure::write('Manual.enableAcknowledgements', true);
+        $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
+
+        // Acknowledge in English
+        $this->post('/pages/acknowledge', ['page_id' => 1, 'locale' => 'en']);
+        $bodyEn = json_decode((string)$this->_response->getBody(), true);
+        $this->assertTrue($bodyEn['acknowledged'] ?? false);
+
+        // Acknowledge status for German should be separate
+        $this->post('/pages/ack_status', ['page_id' => 1, 'locale' => 'de']);
+        $bodyDe = json_decode((string)$this->_response->getBody(), true);
+        $this->assertFalse($bodyDe['acknowledged'] ?? true);
+    }
+
+    // ── Inline Comments ──
 
     public function testInlineCommentsDisabled(): void
     {
@@ -327,7 +444,7 @@ class FeaturesTest extends TestCase
         $this->assertContains($body['error'] ?? '', ['not_authenticated', 'insufficient_permissions']);
     }
 
-    // ── v11: Analytics ──
+    // ── Analytics ──
 
     public function testAnalyticsRequiresAdmin(): void
     {
@@ -338,7 +455,18 @@ class FeaturesTest extends TestCase
         $this->assertContains($body['error'] ?? '', ['insufficient_permissions', 'not_authenticated']);
     }
 
-    // ── v11: Import ──
+    // ── View counter only counts guests (fix v25) ──
+
+    public function testViewCounterNotIncrementedForLoggedInUsers(): void
+    {
+        $before = $this->getTableLocator()->get('Pages')->get(1)->views;
+        $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
+        $this->post('/pages/show', ['id' => 1]);
+        $after = $this->getTableLocator()->get('Pages')->get(1)->views;
+        $this->assertEquals($before, $after, 'View counter must not increment for logged-in users');
+    }
+
+    // ── Import ──
 
     public function testImportDisabled(): void
     {
@@ -349,17 +477,7 @@ class FeaturesTest extends TestCase
         $this->assertEquals('feature_disabled', $body['error'] ?? '');
     }
 
-    // ── v11: Translation Status ──
-
-    public function testTranslationStatusDisabled(): void
-    {
-        \Cake\Core\Configure::write('Manual.enableTranslations', false);
-        $this->get('/pages/translation_status');
-        $body = json_decode((string)$this->_response->getBody(), true);
-        $this->assertEquals('feature_disabled', $body['error'] ?? '');
-    }
-
-    // ── v11: Link Suggestions ──
+    // ── Smart Links ──
 
     public function testLinkSuggestRequiresAuth(): void
     {
@@ -373,11 +491,10 @@ class FeaturesTest extends TestCase
         $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
         $this->post('/pages/link_suggest', ['q' => 'a']);
         $body = json_decode((string)$this->_response->getBody(), true);
-        // Short query: empty or minimal results
         $this->assertIsArray($body['pages'] ?? []);
     }
 
-    // ── v11: Stale List ──
+    // ── Stale List ──
 
     public function testStaleListRequiresEditor(): void
     {
@@ -386,18 +503,16 @@ class FeaturesTest extends TestCase
         $this->assertContains($body['error'] ?? '', ['not_authenticated', 'insufficient_permissions']);
     }
 
-    // ── v11: Review Process ──
+    // ── Review Process ──
 
     public function testReviewDecisionOnlyAssignedReviewer(): void
     {
         \Cake\Core\Configure::write('Manual.enableReviewProcess', true);
-        // User 2 tries to decide on a review assigned to user 1
         $this->session(['Auth' => ['id' => 2, 'role' => 'contributor', 'fullname' => 'Other']]);
         $this->post('/pages/review_decision', ['review_id' => 1, 'decision' => 'approved']);
         $body = json_decode((string)$this->_response->getBody(), true);
-        // Should fail (not_found or insufficient_permissions)
-        $this->assertContains($body['error'] ?? $body['status'] ?? '', ['not_found', 'insufficient_permissions',
-            'approved']);
+        $this->assertContains($body['error'] ?? $body['status'] ?? '', ['not_found', 'insufficient_permissions']);
+        \Cake\Core\Configure::write('Manual.enableReviewProcess', false);
     }
 
     public function testReviewDecisionRejectsWithoutComment(): void
@@ -407,5 +522,6 @@ class FeaturesTest extends TestCase
         $this->post('/pages/review_decision', ['review_id' => 1, 'decision' => 'rejected', 'comment' => '']);
         $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertContains($body['error'] ?? '', ['comment_required', 'not_found']);
+        \Cake\Core\Configure::write('Manual.enableReviewProcess', false);
     }
 }

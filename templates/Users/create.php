@@ -16,9 +16,8 @@
             name="password" class="form-control" required></div>
         <div class="mb-3"><label class="form-label">Confirm Password</label><input type="password"
             name="passwordverify" class="form-control" required></div>
-        <div class="mb-3"><label class="form-label"><?= __('Roles') ?></label><select name="role"
-            class="form-select"><option value="user"><?= __('User') ?></option><option value="admin"><?= __('Admin')
-                ?></option></select></div>
+        <div class="mb-3"><label class="form-label"><?= __('Role') ?></label><select name="role"
+            class="form-select"><option value="editor"><?= __('Editor') ?></option><option value="contributor"><?= __('Contributor') ?></option><option value="admin"><?= __('Admin') ?></option></select></div>
         <div class="mb-3"><label class="form-label"><?= __('Salutation') ?></label><select name="gender"
             class="form-select"><option value="male"><?= __('Mr') ?></option><option value="female"><?= __('Ms')
                 ?></option></select></div>

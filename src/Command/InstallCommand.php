@@ -26,13 +26,19 @@ class InstallCommand extends Command
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser->setDescription('Initialize the database schema, create the initial admin account, and verify setup.');
+        $parser->addOption('webuser', [
+            'short' => 'w',
+            'help' => 'Webserver user (e.g. www-data, nginx, apache). '
+                . 'If set, ownership of storage/, tmp/, logs/ is changed.',
+            'default' => '',
+        ]);
         return $parser;
     }
 
     public function execute(Arguments $args, ConsoleIo $io): int
     {
         $io->out('');
-        $io->out('<info>AppProfileSafe Manual — Installation</info>');
+        $io->out('<info>Guidevera — Installation</info>');
         $io->out(str_repeat('─', 50));
         $io->out('');
 
@@ -107,16 +113,16 @@ class InstallCommand extends Command
             $admin = $users->newEntity([
                 'gender' => 'male',
                 'username' => 'admin',
-                'password' => $hashedPassword,
                 'fullname' => 'Administrator',
                 'email' => 'admin@example.com',
-                'role' => 'admin',
-                'status' => 'active',
-                'change_password' => 1,
                 'page_tree' => '',
                 'notify_mentions' => 1,
                 'preferences' => '{}',
             ]);
+            $admin->set('password', $hashedPassword);
+            $admin->set('role', 'admin');
+            $admin->set('status', 'active');
+            $admin->set('change_password', 1);
 
             if ($users->save($admin)) {
                 $io->out('');
@@ -144,10 +150,14 @@ class InstallCommand extends Command
         $io->out('4. Checking file permissions...');
         foreach (['tmp' => ROOT . DS . 'tmp', 'logs' => ROOT . DS . 'logs'] as $label => $path) {
             if (!is_dir($path)) {
-                @mkdir($path, 0775, true);
+                if (!mkdir($path, 0775, true)) {
+                    $io->warning("   ✗ Failed to create {$label}/");
+                }
             }
-            $io->out(is_writable($path) ? "   ✓ {$label}/ writable." : "   ✗ {$label}/ NOT writable — chmod -R 775
-                {$path}");
+            $msg = is_writable($path)
+                ? "   ✓ {$label}/ writable."
+                : "   ✗ {$label}/ NOT writable — chmod -R 775 {$path}";
+            $io->out($msg);
         }
 
         // 5. Check storage directories
@@ -171,9 +181,59 @@ class InstallCommand extends Command
             }
         }
 
-        // 6. Security salt check
+        // 6. Set ownership for webserver user
         $io->out('');
-        $io->out('6. Security check...');
+        $io->out('6. Setting file ownership...');
+        $webUser = $args->getOption('webuser');
+        if (empty($webUser)) {
+            // Auto-detect common webserver users (posix_* not available on Windows)
+            if (function_exists('posix_getpwnam')) {
+                $candidates = ['www-data', 'nginx', 'apache', 'httpd', '_www'];
+                foreach ($candidates as $c) {
+                    if (posix_getpwnam($c) !== false) {
+                        $webUser = $c;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!empty($webUser)) {
+            $dirsToOwn = [
+                ROOT . DS . 'storage',
+                ROOT . DS . 'tmp',
+                ROOT . DS . 'logs',
+                ROOT . DS . 'webroot',
+            ];
+            $currentUser = function_exists('posix_geteuid') ? (posix_getpwuid(posix_geteuid())['name'] ?? '') : '';
+            if ($currentUser === 'root' || $currentUser === $webUser) {
+                foreach ($dirsToOwn as $dir) {
+                    if (is_dir($dir)) {
+                        $result = 0;
+                        $output = [];
+                        $cmd = "chown -R " . escapeshellarg($webUser . ':' . $webUser)
+                            . " " . escapeshellarg($dir) . " 2>&1";
+                        exec($cmd, $output, $result);
+                        if ($result === 0) {
+                            $io->out("   ✓ chown {$webUser} on " . basename($dir) . "/");
+                        } else {
+                            $io->warning("   ✗ chown failed on " . basename($dir) . "/: " . implode(' ', $output));
+                        }
+                    }
+                }
+                $io->success("   Ownership set to '{$webUser}'.");
+            } else {
+                $io->warning("   Detected webserver user '{$webUser}' but running as '{$currentUser}'.");
+                $io->warning("   Run as root or re-run: sudo bin/cake install --webuser={$webUser}");
+            }
+        } else {
+            $io->warning('   Could not detect webserver user.');
+            $io->warning('   Run: sudo chown -R www-data:www-data storage/ tmp/ logs/');
+            $io->warning('   Or re-run: sudo bin/cake install --webuser=www-data');
+        }
+
+        // 7. Security salt check
+        $io->out('');
+        $io->out('7. Security check...');
         $salt = \Cake\Utility\Security::getSalt();
         if ($salt === 'ab65982f846df40f37417be06b12bd942847aa9ee2e5871bb6f2ff1369cc929e') {
             $io->warning('   ⚠ Security.salt is still the default value!');

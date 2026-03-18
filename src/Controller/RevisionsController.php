@@ -10,12 +10,29 @@ use Cake\Log\Log;
 
 /**
  * Revisions Controller — page version history.
- *
- * Extracted from PagesController. Handles listing, viewing, and restoring
- * historical page snapshots stored in the page_revisions table.
  */
 class RevisionsController extends AppController
 {
+    /**
+     * Check if the current user may access revisions.
+     * Contributors and admins: always.
+     * Editors: only when workflow is disabled.
+     */
+    private function canAccessRevisions(): bool
+    {
+        if (!$this->isLoggedIn()) {
+            return false;
+        }
+        if ($this->hasRole(self::ROLE_CONTRIBUTOR)) {
+            return true;
+        }
+        if ($this->hasRole(self::ROLE_EDITOR)) {
+            $workflowEnabled = Configure::read('Manual.enableReviewProcess') ?? false;
+            return !$workflowEnabled;
+        }
+        return false;
+    }
+
     /**
      * List revisions for a page.
      */
@@ -26,8 +43,8 @@ class RevisionsController extends AppController
         if (!(Configure::read('Manual.enableRevisions') ?? true)) {
             return $this->jsonError('feature_disabled');
         }
-        if (!$this->hasRole(self::ROLE_EDITOR)) {
-            return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        if (!$this->canAccessRevisions()) {
+            return $this->requireRole(self::ROLE_CONTRIBUTOR) ? null : $this->response;
         }
         $id = (int)$this->request->getData('id', 0);
         if (!$id) {
@@ -42,8 +59,8 @@ class RevisionsController extends AppController
         foreach ($revisions as $r) {
             $list[] = [
                 'id' => $r->id, 'created' => $r->created->format('d.m.Y H:i'),
-                'createdBy' => $r->creator->fullname ?? '', 'note' => $r->revision_note ?? '',
-                'titlePreview' => mb_substr($r->title, 0, 60),
+                'createdBy' => $r->creator?->fullname ?? '', 'note' => $r->revision_note ?? '',
+                'titlePreview' => mb_substr($r->title ?? '', 0, 60),
             ];
         }
         return $this->jsonSuccess(['revisions' => $list]);
@@ -59,8 +76,8 @@ class RevisionsController extends AppController
         if (!(Configure::read('Manual.enableRevisions') ?? true)) {
             return $this->jsonError('feature_disabled');
         }
-        if (!$this->hasRole(self::ROLE_EDITOR)) {
-            return $this->requireRole(self::ROLE_EDITOR) ? null : $this->response;
+        if (!$this->canAccessRevisions()) {
+            return $this->requireRole(self::ROLE_CONTRIBUTOR) ? null : $this->response;
         }
         $revId = (int)$this->request->getData('revision_id', 0);
         if (!$revId) {
@@ -70,10 +87,10 @@ class RevisionsController extends AppController
             $rev = $this->fetchTable('PageRevisions')->get($revId, contain: ['CreatedByUsers']);
             return $this->jsonSuccess([
                 'id' => $rev->id, 'page_id' => $rev->page_id,
-                'title' => $rev->title, 'description' => $rev->description,
+                'title' => $rev->title ?? '', 'description' => $rev->description ?? '',
                 'content' => PagesService::sanitizeHtml($rev->content ?? ''),
                 'created' => $rev->created->format('d.m.Y H:i'),
-                'createdBy' => $rev->creator->fullname ?? '',
+                'createdBy' => $rev->creator?->fullname ?? '',
                 'note' => $rev->revision_note ?? '',
             ]);
         } catch (\Exception $e) {
@@ -84,6 +101,7 @@ class RevisionsController extends AppController
 
     /**
      * Restore a revision — saves current content as backup first.
+     * Editors: only when workflow is disabled. Contributors+: always.
      */
     public function restore(): ?\Cake\Http\Response
     {
@@ -92,7 +110,7 @@ class RevisionsController extends AppController
         if (!(Configure::read('Manual.enableRevisions') ?? true)) {
             return $this->jsonError('feature_disabled');
         }
-        if (!$this->hasRole(self::ROLE_CONTRIBUTOR)) {
+        if (!$this->canAccessRevisions()) {
             return $this->requireRole(self::ROLE_CONTRIBUTOR) ? null : $this->response;
         }
         $revId = (int)$this->request->getData('revision_id', 0);
@@ -107,16 +125,21 @@ class RevisionsController extends AppController
             $user = $this->currentUser();
 
             // Backup current content before restore
-            $revTable->save($revTable->newEntity([
+            $backup = $revTable->newEntity([
                 'page_id' => $page->id, 'title' => $page->title,
                 'description' => $page->description, 'content' => $page->content,
-                'created_by' => $user['id'] ?? 0, 'revision_note' => 'Auto-saved before restore',
-            ]));
+                'revision_note' => 'Auto-saved before restore',
+            ]);
+            $backup->set('created_by', $user['id'] ?? 0);
+            if (!$revTable->save($backup)) {
+                return $this->jsonError('backup_failed');
+            }
 
             $page = $pages->patchEntity($page, [
                 'title' => $rev->title, 'description' => $rev->description,
-                'content' => $rev->content, 'modified_by' => $user['id'] ?? 0,
-            ]);
+                'content' => $rev->content,
+            ], ['fields' => ['title', 'description', 'content']]);
+            $page->set('modified_by', $user['id'] ?? 0);
             if ($pages->save($page)) {
                 return $this->jsonSuccess(['intAffectedRows' => 1]);
             }

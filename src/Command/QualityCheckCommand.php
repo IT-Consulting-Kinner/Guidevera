@@ -12,9 +12,9 @@ use Cake\Console\ConsoleOptionParser;
 /**
  * Quality Check Command — content quality analysis.
  *
- * Checks: missing descriptions, stale content, broken internal links,
- * orphaned media, heading structure issues. Results can be viewed
- * in the admin dashboard via /pages/stats.
+ * Checks: missing descriptions, missing keywords, missing tags (if enableSmartLinks),
+ * stale content, broken internal links, orphaned media, heading structure issues.
+ * Results can be viewed in the admin dashboard via /pages/stats.
  *
  * Usage: bin/cake quality-check
  */
@@ -36,12 +36,46 @@ class QualityCheckCommand extends Command
         $io->out('<info>Content Quality Check</info>');
         $io->out(str_repeat('─', 50));
 
-        $pages = $this->fetchTable('Pages')->find()
-            ->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all();
+        $showRoot = \Cake\Core\Configure::read('Manual.showNavigationRoot') ?? true;
+        $enableSmartLinks = \Cake\Core\Configure::read('Manual.enableSmartLinks') ?? false;
+        $staleMonths = \Cake\Core\Configure::read('Manual.staleContentMonths') ?? 12;
+
+        $allPages = $this->fetchTable('Pages')->find()
+            ->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all()->toArray();
+
+        // Determine root page ID
+        $rootPageId = !empty($allPages) ? $allPages[0]->id : null;
+
+        // Pre-load keywords for all pages in bulk
+        $pageIds = array_map(fn($p) => $p->id, $allPages);
+        $pagesWithKeywords = [];
+        if (!empty($pageIds)) {
+            $kwRows = $this->fetchTable('Pagesindex')->find()
+                ->select(['page_id'])->where(['page_id IN' => $pageIds])->all();
+            foreach ($kwRows as $r) {
+                $pagesWithKeywords[$r->page_id] = true;
+            }
+        }
+
+        // Pre-load tags for all pages in bulk (only if enableSmartLinks)
+        $pagesWithTags = [];
+        if ($enableSmartLinks && !empty($pageIds)) {
+            $tagRows = $this->fetchTable('PageTags')->find()
+                ->select(['page_id'])->where(['page_id IN' => $pageIds])->all();
+            foreach ($tagRows as $r) {
+                $pagesWithTags[$r->page_id] = true;
+            }
+        }
+
         $issues = [];
         $pageCount = 0;
 
-        foreach ($pages as $page) {
+        foreach ($allPages as $page) {
+            // Skip root page if showNavigationRoot is false
+            if (!$showRoot && $rootPageId !== null && $page->id === $rootPageId) {
+                continue;
+            }
+
             $pageCount++;
             $pageIssues = [];
 
@@ -50,8 +84,8 @@ class QualityCheckCommand extends Command
                 $pageIssues[] = 'No description';
             }
 
-            // 2. Stale content (not modified in 12+ months)
-            if ($page->modified && $page->modified->wasWithinLast('12 months') === false) {
+            // 2. Stale content
+            if ($page->modified && $page->modified->wasWithinLast($staleMonths . ' months') === false) {
                 $months = (int)$page->modified->diffInMonths(new \Cake\I18n\DateTime());
                 $pageIssues[] = "Not updated in {$months} months";
             }
@@ -62,16 +96,24 @@ class QualityCheckCommand extends Command
                 $pageIssues[] = 'Content is empty or very short';
             }
 
-            // 4. Heading structure (h2/h3 before h1, skipped levels)
+            // 4. Missing keywords
+            if (empty($pagesWithKeywords[$page->id])) {
+                $pageIssues[] = 'No keywords';
+            }
+
+            // 5. Missing tags (only if enableSmartLinks)
+            if ($enableSmartLinks && empty($pagesWithTags[$page->id])) {
+                $pageIssues[] = 'No tags';
+            }
+
+            // 6. Heading structure (h1 in content, skipped levels)
             if (!empty($page->content)) {
                 preg_match_all('/<h([1-6])/i', $page->content, $headings);
                 if (!empty($headings[1])) {
                     $levels = array_map('intval', $headings[1]);
-                    // Content shouldn't start with h1 (page title is already h3)
                     if ($levels[0] === 1) {
                         $pageIssues[] = 'Content starts with <h1> (use h2+ instead)';
                     }
-                    // Check for skipped levels (e.g. h2 → h4)
                     for ($i = 1; $i < count($levels); $i++) {
                         if ($levels[$i] > $levels[$i - 1] + 1) {
                             $pageIssues[] = "Heading level skipped: h{$levels[$i-1]} → h{$levels[$i]}";
@@ -81,9 +123,9 @@ class QualityCheckCommand extends Command
                 }
             }
 
-            // 5. Broken internal links
+            // 7. Broken internal links
             if (!empty($page->content)) {
-                preg_match_all('/href=["\']\/pages\/(\d+)/i', $page->content, $links);
+                preg_match_all('/href=[\"\']\/pages\/(\d+)/i', $page->content, $links);
                 if (!empty($links[1])) {
                     foreach (array_unique($links[1]) as $linkedId) {
                         $exists = $this->fetchTable('Pages')->find()
@@ -95,12 +137,13 @@ class QualityCheckCommand extends Command
                 }
             }
 
-            // 6. Missing images (referenced but file doesn't exist)
+            // 8. Missing images
             if (!empty($page->content)) {
-                preg_match_all('/src=["\']\/downloads\/([^"\']+)/i', $page->content, $imgs);
+                preg_match_all('/src=[\"\']\/downloads\/([^\"\']+)/i', $page->content, $imgs);
                 if (!empty($imgs[1])) {
                     $mediaDir = ROOT . DS . 'storage' . DS . 'media' . DS;
                     foreach (array_unique($imgs[1]) as $imgFile) {
+                        $imgFile = basename($imgFile);
                         if (!file_exists($mediaDir . $imgFile)) {
                             $pageIssues[] = "Missing image: {$imgFile}";
                         }
@@ -116,14 +159,14 @@ class QualityCheckCommand extends Command
             }
         }
 
-        // 7. Orphaned media files (in storage but not referenced)
+        // 9. Orphaned media files
         $io->out('');
         $io->out('Checking orphaned media...');
         $mediaDir = ROOT . DS . 'storage' . DS . 'media' . DS;
         $orphaned = [];
         if (is_dir($mediaDir)) {
             $allContent = '';
-            foreach ($pages as $p) {
+            foreach ($allPages as $p) {
                 $allContent .= $p->content ?? '';
             }
             foreach (scandir($mediaDir) as $file) {
@@ -166,33 +209,44 @@ class QualityCheckCommand extends Command
             $cache = \Cake\Cache\Cache::getConfig('default') ? true : false;
             if ($cache) {
                 $issueCount = 0;
-                $stale = $noDesc = $empty = 0;
+                $stale = $noDesc = $empty = $noKeywords = $noTags = 0;
                 foreach ($issues as $data) {
                     $issueCount += count($data['issues']);
                     foreach ($data['issues'] as $i) {
-                        if (str_contains($i, 'Not updated')) {
-                            $stale++;
-                        }
-                        if (str_contains($i, 'No description')) {
-                            $noDesc++;
-                        }
-                        if (str_contains($i, 'empty or very short')) {
-                            $empty++;
-                        }
+                        if (str_contains($i, 'Not updated')) $stale++;
+                        if (str_contains($i, 'No description')) $noDesc++;
+                        if (str_contains($i, 'empty or very short')) $empty++;
+                        if (str_contains($i, 'No keywords')) $noKeywords++;
+                        if (str_contains($i, 'No tags')) $noTags++;
                     }
                 }
+
+                // Format issues for dashboard display
+                $issueList = [];
+                foreach ($issues as $id => $data) {
+                    foreach ($data['issues'] as $issueText) {
+                        $issueList[] = ['id' => $id, 'title' => $data['title'], 'type' => $issueText];
+                    }
+                }
+
                 \Cake\Cache\Cache::write('quality_check_results', [
                     'timestamp' => date('Y-m-d H:i:s'),
-                    'summary' => ['stale' => $stale, 'noDescription' => $noDesc, 'emptyContent' => $empty,
-                        'totalIssues' => $issueCount],
-                    'issues' => $issues,
-                    'orphaned' => $orphaned,
+                    'summary' => [
+                        'stale' => $stale,
+                        'noDescription' => $noDesc,
+                        'emptyContent' => $empty,
+                        'noKeywords' => $noKeywords,
+                        'noTags' => $noTags,
+                        'totalIssues' => $issueCount,
+                    ],
+                    'issues' => $issueList,
+                    'orphaned' => array_map(fn($f) => ['title' => $f], $orphaned),
                     'pageCount' => $pageCount,
                 ]);
                 $io->out('Results cached for dashboard display.');
             }
         } catch (\Exception $e) {
-/* Cache not available */
+            /* Cache not available */
         }
 
         return self::CODE_SUCCESS;

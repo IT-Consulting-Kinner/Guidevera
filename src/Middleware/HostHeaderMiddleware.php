@@ -33,6 +33,36 @@ class HostHeaderMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (Configure::read('debug')) {
+            $fullBaseUrl = Configure::read('App.fullBaseUrl');
+            if (!$fullBaseUrl) {
+                $requestHost = $request->getUri()->getHost();
+                // In debug mode without fullBaseUrl, only allow localhost access
+                $allowedDebugHosts = ['localhost', '127.0.0.1', '::1'];
+                if (!in_array(strtolower($requestHost), $allowedDebugHosts, true)) {
+                    \Cake\Log\Log::warning(
+                        'HostHeaderMiddleware: Blocked non-localhost request in debug mode. '
+                        . "Host '{$requestHost}' rejected. "
+                        . 'Set App.fullBaseUrl to allow remote access.'
+                    );
+                    throw new BadRequestException(
+                        'App.fullBaseUrl is not configured. '
+                        . 'Only localhost is allowed in debug mode without it.',
+                    );
+                }
+                return $handler->handle($request);
+            }
+            // If fullBaseUrl IS configured, validate even in debug mode
+            $configuredHost = parse_url($fullBaseUrl, PHP_URL_HOST);
+            $requestHost = $request->getUri()->getHost();
+            if ($configuredHost && $requestHost && strtolower($configuredHost) !== strtolower($requestHost)) {
+                \Cake\Log\Log::warning(
+                    "HostHeaderMiddleware: Host mismatch in debug mode. "
+                    . "Expected: {$configuredHost}, Got: {$requestHost}"
+                );
+                throw new BadRequestException(
+                    'Invalid Host header. Request host does not match configured application host.',
+                );
+            }
             return $handler->handle($request);
         }
 
@@ -48,7 +78,8 @@ class HostHeaderMiddleware implements MiddlewareInterface
         $configuredHost = parse_url($fullBaseUrl, PHP_URL_HOST);
         $requestHost = $request->getUri()->getHost();
 
-        if ($configuredHost && $requestHost && strtolower($configuredHost) !== strtolower($requestHost)) {
+        // Reject if either host is empty (misconfiguration) or they don't match
+        if (!$configuredHost || !$requestHost || strtolower($configuredHost) !== strtolower($requestHost)) {
             throw new BadRequestException(
                 'Invalid Host header. Request host does not match configured application host.',
             );

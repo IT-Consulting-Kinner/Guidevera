@@ -48,6 +48,12 @@ class AppController extends Controller
     {
         parent::beforeFilter($event);
 
+        // Prevent browser from caching authenticated pages (fixes stale UI after logout)
+        $this->response = $this->response
+            ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->withHeader('Pragma', 'no-cache')
+            ->withHeader('Expires', '0');
+
         $this->set('auth', $this->request->getSession()->read('Auth') ?? []);
         $this->set('public', Configure::read('Manual') ?? []);
 
@@ -72,7 +78,7 @@ class AppController extends Controller
         if (!$this->isLoggedIn()) {
             return $minRole === self::ROLE_GUEST;
         }
-        $userRole = $this->request->getSession()->read('Auth.role') ?? self::ROLE_EDITOR;
+        $userRole = $this->request->getSession()->read('Auth.role') ?? self::ROLE_GUEST;
         $userLevel = array_search($userRole, self::ROLES);
         $minLevel = array_search($minRole, self::ROLES);
         if ($userLevel === false || $minLevel === false) {
@@ -91,13 +97,13 @@ class AppController extends Controller
     protected function jsonError(string $error): \Cake\Http\Response
     {
         return $this->response->withType('application/json')
-            ->withStringBody(json_encode(['error' => $error]));
+            ->withStringBody(json_encode(['error' => $error], JSON_HEX_TAG | JSON_HEX_AMP));
     }
 
     protected function jsonSuccess(array $data): \Cake\Http\Response
     {
         return $this->response->withType('application/json')
-            ->withStringBody(json_encode($data));
+            ->withStringBody(json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP));
     }
 
     // ── Auth Guards ──
@@ -129,6 +135,23 @@ class AppController extends Controller
         return false;
     }
 
+    // ── Rate-Limit Safe IP ──
+
+    /**
+     * Get client IP for rate limiting. Only trusts proxy headers (X-Forwarded-For)
+     * when the request comes from a configured trusted proxy IP.
+     * Configure via Manual.trustedProxies (array of IPs) in app.php.
+     */
+    protected function rateLimitIp(): string
+    {
+        $remoteAddr = $this->request->getEnv('REMOTE_ADDR') ?? '0.0.0.0';
+        $trustedProxies = Configure::read('Manual.trustedProxies') ?? [];
+        if (!empty($trustedProxies) && in_array($remoteAddr, $trustedProxies, true)) {
+            return $this->request->clientIp();
+        }
+        return $remoteAddr;
+    }
+
     // ── Audit Log ──
 
     protected function audit(string $action, string $entityType, int $entityId, string $details = ''): void
@@ -138,12 +161,14 @@ class AppController extends Controller
         }
         try {
             $tbl = $this->fetchTable('AuditLog');
-            $tbl->save($tbl->newEntity([
-                'user_id' => $this->currentUser()['id'] ?? 0,
-                'action' => $action, 'entity_type' => $entityType,
-                'entity_id' => $entityId, 'details' => mb_substr($details, 0, 2000),
-                'ip_address' => $this->request->clientIp(),
-            ]));
+            $entry = $tbl->newEmptyEntity();
+            $entry->set('user_id', $this->currentUser()['id'] ?? 0);
+            $entry->set('action', $action);
+            $entry->set('entity_type', $entityType);
+            $entry->set('entity_id', $entityId);
+            $entry->set('details', mb_substr($details, 0, 2000));
+            $entry->set('ip_address', $this->rateLimitIp());
+            $tbl->save($entry);
         } catch (\Exception $e) {
             Log::error('Audit log failed: ' . $e->getMessage());
         }
@@ -163,6 +188,22 @@ class AppController extends Controller
             $mailer->setTo($email)->setSubject('[Manual] ' . $subject)->deliver($body);
         } catch (\Exception $e) {
             Log::error('Notification failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send a notification to a specific user email (for mentions, subscriptions, review assignments).
+     */
+    protected function sendUserNotification(string $toEmail, string $subject, string $body): void
+    {
+        if (empty($toEmail)) {
+            return;
+        }
+        try {
+            $mailer = new \Cake\Mailer\Mailer();
+            $mailer->setTo($toEmail)->setSubject('[Manual] ' . $subject)->deliver($body);
+        } catch (\Exception $e) {
+            Log::error('User notification failed: ' . $e->getMessage());
         }
     }
 }

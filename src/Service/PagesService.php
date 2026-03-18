@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Cake\Core\Configure;
 use Cake\Datasource\FactoryLocator;
 
 /**
@@ -54,7 +55,7 @@ class PagesService
         'h1' => ['style', 'class'], 'h2' => ['style', 'class'], 'h3' => ['style', 'class'],
         'h4' => ['style', 'class'], 'h5' => ['style', 'class'], 'h6' => ['style', 'class'],
         'b' => [], 'strong' => [], 'i' => [], 'em' => [], 'u' => [], 's' => [], 'sub' => [], 'sup' => [],
-        'small' => [], 'mark' => [],
+        'small' => [],
         'font' => ['color', 'size', 'face'],
         'ul' => ['style', 'class'], 'ol' => ['style', 'class', 'start', 'type'], 'li' => ['style', 'class'],
         'table' => ['style', 'class', 'border', 'cellpadding', 'cellspacing', 'width'],
@@ -84,19 +85,25 @@ class PagesService
         // Remove null bytes
         $html = str_replace("\0", '', $html);
 
-        // Remove dangerous tags and their content
+        // Remove dangerous tags and their content (multi-pass to catch nested tags)
         $dangerousTags = 'script|style|iframe|object|embed|form|input'
-            . '|textarea|select|button|applet|meta|link|base';
-        $html = preg_replace(
-            '/<(' . $dangerousTags . ')[^>]*>.*?<\/\1>/si',
-            '',
-            $html
-        );
-        $html = preg_replace(
-            '/<(' . $dangerousTags . ')[^>]*\/?>/si',
-            '',
-            $html
-        );
+            . '|textarea|select|button|applet|meta|link|base'
+            . '|svg|math|noscript|template|xmp|noembed';
+        $prevHtml = '';
+        $maxPasses = 5;
+        while ($prevHtml !== $html && $maxPasses-- > 0) {
+            $prevHtml = $html;
+            $html = preg_replace(
+                '/<(' . $dangerousTags . ')[^>]*>.*?<\/\1>/si',
+                '',
+                $html
+            );
+            $html = preg_replace(
+                '/<(' . $dangerousTags . ')[^>]*\/?>/si',
+                '',
+                $html
+            );
+        }
 
         // Remove event handlers
         $html = preg_replace('/\s+on\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]*)/si', '', $html);
@@ -218,11 +225,28 @@ class PagesService
     private static function sanitizeCss(string $css): string
     {
         $css = preg_replace('/\/\*.*?\*\//s', '', $css);
+        // Decode CSS escape sequences (e.g. \6A -> j) before checking
+        $css = preg_replace_callback('/\\\\([0-9a-fA-F]{1,6})\s?/', function ($m) {
+            return mb_chr((int)hexdec($m[1]), 'UTF-8');
+        }, $css);
+        // Decode HTML entities
+        $css = html_entity_decode($css, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         foreach (self::$dangerousCssProperties as $prop) {
             $css = preg_replace('/\b' . preg_quote($prop, '/') . '\b\s*:/i', 'blocked:', $css);
         }
         $css = preg_replace('/expression\s*\(/i', 'blocked(', $css);
-        $css = preg_replace('/url\s*\(\s*["\']?\s*(javascript|data|vbscript)\s*:/i', 'url(blocked:', $css);
+        // Block @import rules (can load external stylesheets)
+        $css = preg_replace('/@import\b[^;]*(;|$)/i', '', $css);
+        // Block all url() calls except relative paths (no external references)
+        $css = preg_replace_callback('/url\s*\(\s*["\']?\s*([^)"\']*)[\s"\']*\)/i', function ($m) {
+            $target = trim($m[1]);
+            $targetClean = strtolower(preg_replace('/[\x00-\x20]+/', '', $target));
+            // Only allow relative paths, block all absolute URLs (including http(s) for privacy)
+            if (!preg_match('/^[a-z]+:/i', $targetClean) && !str_starts_with($targetClean, '//')) {
+                return $m[0]; // Safe: relative path only
+            }
+            return 'url(blocked:)';
+        }, $css);
         $css = preg_replace('/blocked\s*:[^;]*(;|$)/i', '', $css);
         return trim($css);
     }
@@ -249,6 +273,25 @@ class PagesService
             return true;
         }
         return false;
+    }
+
+    /**
+     * Strip external resource URLs for safe PDF generation (SSRF mitigation).
+     * Replaces external src/href attributes with safe placeholders.
+     */
+    public static function stripExternalResources(string $html): string
+    {
+        // Replace external img src with placeholder
+        $html = preg_replace_callback(
+            '/<img([^>]*)\bsrc\s*=\s*(["\'])(https?:\/\/[^"\']*)\2/si',
+            function ($m) {
+                return '<img' . $m[1] . 'src=' . $m[2] . '#external-removed' . $m[2];
+            },
+            $html
+        );
+        // Remove link/script/iframe with external sources (shouldn't exist after sanitizer, but defense in depth)
+        $html = preg_replace('/<(link|script|iframe|object|embed|frame)\b[^>]*>/si', '', $html);
+        return $html;
     }
 
     // ── Chapter numbering ──
@@ -356,7 +399,11 @@ class PagesService
         }
         $crumbs = [];
         $current = $byId[$pageId] ?? null;
+        $maxDepth = 50;
         while ($current) {
+            if (--$maxDepth <= 0) {
+                break;
+            }
             $id = is_object($current) ? $current->id : ($current['id'] ?? 0);
             $title = is_object($current) ? ($current->title ?? '') : ($current['title'] ?? '');
             array_unshift($crumbs, ['id' => $id, 'title' => $title]);
@@ -378,16 +425,23 @@ class PagesService
     }
 
     // ── Navigation ──
-    public static function calculateNavigation(int $currentId, array $pages): array
+    public static function calculateNavigation(int $currentId, array $pages, bool $showRoot = true): array
     {
         $nav = ['firstId' => 0, 'firstTitle' => '', 'previousId' => 0, 'previousTitle' => '', 'nextId' => 0,
             'nextTitle' => '', 'lastId' => 0, 'lastTitle' => ''];
+        // Determine root page ID (first in tree)
+        $rootId = 0;
+        if (!$showRoot && !empty($pages)) {
+            $first = $pages[0];
+            $rootId = (int)(is_array($first) ? ($first['id'] ?? 0) : ($first->id ?? 0));
+        }
         $active = [];
         foreach ($pages as $p) {
             $s = is_array($p) ? $p['status'] : $p->status;
-            if ($s === 'active') {
-                $active[] = $p;
-            }
+            $pid = (int)(is_array($p) ? $p['id'] : $p->id);
+            if ($s !== 'active') continue;
+            if ($rootId && $pid === $rootId) continue;
+            $active[] = $p;
         }
         if (empty($active)) {
             return $nav;
@@ -454,12 +508,12 @@ class PagesService
         }
         $hasOpen = !empty($openState);
 
-        // Helper: build <a> tag — real href for guests, javascript for auth
+        // Helper: build <a> tag — real href for guests, data-action for auth
         $makeLink = function (int $id, string $title, string $classes, string $rawTitle) use ($isAuth): string {
             if ($isAuth) {
                 return '<a name="a_' .
-                    $id . '" href="javascript:" onclick="post_page_show(' . $id . ')" class="' . $classes . '
-                        ">' . $title . '</a>';
+                    $id . '" href="#" data-action="postPageShow" data-arg="' . $id . '" class="' . $classes .
+                        '">' . $title . '</a>';
             }
             $slug = preg_replace('/\s+/', '-', preg_replace('/[^a-zA-Z0-9\-_ ]/', '', $rawTitle));
             return '<a name="a_' .
@@ -534,8 +588,8 @@ class PagesService
                         $fi = $isOpen ? 'fa-folder-open' : 'fa-folder';
                         $di = $isOpen ? 'folder-open' : 'folder-closed';
                         $html .= $showIcons ? '<span class="pe-2 fas ' .
-                            $fi . '" style="color:#ffb449" onclick="tree_view(this)" data-icon="' . $di . '
-                                "></span>' : '<span class="pe-2" onclick="tree_view(this)" data-icon="' . $di . '
+                            $fi . '" style="color:#ffb449" data-action="treeView" data-icon="' . $di . '
+                                "></span>' : '<span class="pe-2" data-action="treeView" data-icon="' . $di . '
                                     "></span>';
                     } else {
                         $html .= $showIcons ? '<span class="pe-2 far fa-file-alt" style="color:#222"
@@ -556,5 +610,23 @@ class PagesService
 
         $treeRoot = (int)(is_object($pages[0]) ? ($pages[0]->parent_id ?? 0) : ($pages[0]['parent_id'] ?? 0));
         return $render($treeRoot);
+    }
+
+    /**
+     * Get the root page ID (first page in the ordered tree).
+     */
+    public static function getRootPageId(array $pages): int
+    {
+        if (empty($pages)) return 0;
+        $first = $pages[0];
+        return (int)(is_array($first) ? ($first['id'] ?? 0) : ($first->id ?? 0));
+    }
+
+    /**
+     * Check if root page should be hidden from public-facing views.
+     */
+    public static function shouldHideRoot(): bool
+    {
+        return !(Configure::read('Manual.showNavigationRoot') ?? true);
     }
 }

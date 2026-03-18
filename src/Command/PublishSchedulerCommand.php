@@ -32,34 +32,39 @@ class PublishSchedulerCommand extends Command
         $pages = $this->fetchTable('Pages');
         $now = new DateTime();
         $published = $expired = $dueSent = 0;
+        $connection = $pages->getConnection();
 
-        // Auto-publish: publish_at <= now AND status = inactive AND workflow_status = draft
-        $toPublish = $pages->find()->where([
-            'publish_at IS NOT' => null, 'publish_at <=' => $now,
-            'status' => 'inactive', 'deleted_at IS' => null,
-        ])->all();
-        foreach ($toPublish as $p) {
-            $pages->updateAll(
-                ['status' => 'active', 'workflow_status' => 'published', 'publish_at' => null],
-                ['id' => $p->id]
-            );
-            $published++;
-            $io->out("Published: #{$p->id} {$p->title}");
-        }
+        // Auto-publish: publish_at <= now AND status = inactive
+        $connection->transactional(function () use ($pages, $now, &$published, $io) {
+            $toPublish = $pages->find()->where([
+                'publish_at IS NOT' => null, 'publish_at <=' => $now,
+                'status' => 'inactive', 'deleted_at IS' => null,
+            ])->all();
+            foreach ($toPublish as $p) {
+                $pages->updateAll(
+                    ['status' => 'active', 'workflow_status' => 'published', 'publish_at' => null, 'modified' => $now],
+                    ['id' => $p->id]
+                );
+                $published++;
+                $io->out("Published: #{$p->id} {$p->title}");
+            }
+        });
 
         // Auto-expire: expire_at <= now AND status = active
-        $toExpire = $pages->find()->where([
-            'expire_at IS NOT' => null, 'expire_at <=' => $now,
-            'status' => 'active', 'deleted_at IS' => null,
-        ])->all();
-        foreach ($toExpire as $p) {
-            $pages->updateAll(
-                ['status' => 'inactive', 'workflow_status' => 'archived', 'expire_at' => null],
-                ['id' => $p->id]
-            );
-            $expired++;
-            $io->out("Expired: #{$p->id} {$p->title}");
-        }
+        $connection->transactional(function () use ($pages, $now, &$expired, $io) {
+            $toExpire = $pages->find()->where([
+                'expire_at IS NOT' => null, 'expire_at <=' => $now,
+                'status' => 'active', 'deleted_at IS' => null,
+            ])->all();
+            foreach ($toExpire as $p) {
+                $pages->updateAll(
+                    ['status' => 'inactive', 'workflow_status' => 'archived', 'expire_at' => null, 'modified' => $now],
+                    ['id' => $p->id]
+                );
+                $expired++;
+                $io->out("Expired: #{$p->id} {$p->title}");
+            }
+        });
 
         // Review due reminders: review_due_at <= now (log, don't auto-change)
         $due = $pages->find()->where([

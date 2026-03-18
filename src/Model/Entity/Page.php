@@ -34,17 +34,18 @@ use Cake\ORM\Entity;
 class Page extends Entity
 {
     protected array $_accessible = [
-        'created_by' => true,
-        'modified_by' => true,
         'parent_id' => true,
         'position' => true,
         'title' => true,
         'description' => true,
         'content' => true,
-        'views' => true,
-        'status' => true,
-        'deleted_at' => true,
-        'workflow_status' => true,
-        'publish_at' => true, 'expire_at' => true, 'review_due_at' => true, 'requires_ack' => true,
+        'status' => false,
+        'workflow_status' => false,
+        'publish_at' => true,
+        'expire_at' => true,
+        'review_due_at' => true,
+        'requires_ack' => true,
+        'locale' => true,
+        // created_by, modified_by, views, deleted_at: set server-side only
     ];
 }

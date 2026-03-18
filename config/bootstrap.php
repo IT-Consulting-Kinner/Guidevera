@@ -92,6 +92,14 @@ try {
 /*
  * Load an environment local configuration file to provide overrides to your configuration.
  * Notice: For security reasons app_local.php **should not** be included in your git repo.
+ *
+ * app_local.php is DEEP-MERGED into app.php:
+ * - Individual keys override app.php values
+ * - Keys only in app.php are preserved
+ * - You only need to define the values you want to change
+ * Example: To override just showLoginButton, add to app_local.php:
+ *   'Manual' => ['showLoginButton' => false]
+ * All other Manual keys from app.php remain unchanged.
  */
 if (file_exists(CONFIG . 'app_local.php')) {
     Configure::load('app_local', 'default');
@@ -164,18 +172,20 @@ if (!$fullBaseUrl) {
     if ($envUrl) {
         $fullBaseUrl = $envUrl;
     } else {
-        $httpHost = env('HTTP_HOST');
+        if (Configure::read('debug')) {
+            $httpHost = env('HTTP_HOST');
 
-        /*
-         * Development mode fallback: Use HTTP_HOST for convenience.
-         * WARNING: This is ONLY safe in development. In production, set
-         * APP_FULL_BASE_URL or configure App.fullBaseUrl in app_local.php.
-         */
-        if ($httpHost) {
-            $s = (env('HTTPS') || env('HTTP_X_FORWARDED_PROTO') === 'https') ? 's' : null;
-            $fullBaseUrl = 'http' . $s . '://' . $httpHost;
+            /*
+             * Development mode fallback: Use HTTP_HOST for convenience.
+             * WARNING: This is ONLY safe in development. In production, set
+             * APP_FULL_BASE_URL or configure App.fullBaseUrl in app_local.php.
+             */
+            if ($httpHost) {
+                $s = (env('HTTPS') || env('HTTP_X_FORWARDED_PROTO') === 'https') ? 's' : null;
+                $fullBaseUrl = 'http' . $s . '://' . $httpHost;
+            }
+            unset($httpHost, $s);
         }
-        unset($httpHost, $s);
     }
     unset($envUrl);
 }
@@ -188,17 +198,15 @@ unset($fullBaseUrl);
  * Security salt validation.
  * In production, using the default salt is a security risk.
  */
-if (
-    !Configure::read('debug') && Configure::read('Security.salt') ===
-    'ab65982f846df40f37417be06b12bd942847aa9ee2e5871bb6f2ff1369cc929e'
-) {
-    trigger_error(
-        'SECURITY WARNING: Security.salt is still the default value. ' .
+$salt = Configure::read('Security.salt');
+if (empty($salt) || strlen($salt) < 32) {
+    throw new \RuntimeException(
+        'SECURITY ERROR: Security.salt is not configured or too short (min 32 chars). ' .
         'Set the SECURITY_SALT environment variable to a unique random string. ' .
-        'Generate one with: php -r "echo bin2hex(random_bytes(32));"',
-        E_USER_WARNING
+        'Generate one with: php -r "echo bin2hex(random_bytes(32));"'
     );
 }
+unset($salt);
 
 /*
  * Apply the loaded configuration settings to their respective systems.

@@ -15,7 +15,8 @@ $showAuthor = $public['showAuthorDetails'] ?? true;
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <link rel="stylesheet" href="/css/app.css">
-    <script src="/js/jquery-3.5.1.js"></script>
+    <?php $nonce = $this->request->getAttribute('cspNonce') ?? ''; ?>
+    <script src="/js/jquery-3.5.1.js" nonce="<?= $nonce ?>"></script>
     <style>
         body { background-color: #f5f5f5; margin: 0; overflow: scroll; }
         #app { font-size: 14pt; font-weight: normal; font-family: "Times New Roman", Times,
@@ -63,7 +64,7 @@ $showAuthor = $public['showAuthorDetails'] ?? true;
             <div id="content_wrapper" class="print_size">
                 <h3 id="page_title" class="<?= ($page->status ?? '') === 'inactive' ? 'inactive' : '' ?>"><?=
                     h($page->title ?: 'Untitled') ?></h3>
-                <?= $page->content ?? '' ?>
+                <?= \App\Service\PagesService::sanitizeHtml($page->content ?? '') ?>
             </div>
             <?php if ($showAuthor): ?>
                 <span style="line-height:1.5em;display:block;padding:0 1em;border-top:1px solid #ccc;"><?= __('Last

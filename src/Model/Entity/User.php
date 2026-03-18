@@ -29,18 +29,19 @@ class User extends Entity
     protected array $_accessible = [
         'gender' => true,
         'username' => true,
-        'password' => true,
+        'password' => false,
         'fullname' => true,
         'email' => true,
-        'role' => true,
-        'change_password' => true,
+        'role' => false,
+        'status' => false,
+        'change_password' => false,
         'page_tree' => true,
         'notify_mentions' => true,
         'preferences' => true,
-        'status' => true,
     ];
 
     protected array $_hidden = [
         'password',
     ];
+
 }

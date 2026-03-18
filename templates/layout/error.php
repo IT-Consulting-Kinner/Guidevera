@@ -29,12 +29,19 @@
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
     <?= $this->fetch('script') ?>
+    <?php $nonce = $this->request->getAttribute('cspNonce') ?? ''; ?>
+    <script nonce="<?= $nonce ?>">
+    (function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})();
+    </script>
 </head>
 <body>
     <div class="error-container">
         <?= $this->Flash->render() ?>
         <?= $this->fetch('content') ?>
-        <?= $this->Html->link(__('Back'), 'javascript:history.back()') ?>
+        <a href="#" id="backLink"><?= __('Back') ?></a>
     </div>
+    <script nonce="<?= $nonce ?>">
+    document.getElementById('backLink').addEventListener('click', function(e) { e.preventDefault(); history.back(); });
+    </script>
 </body>
 </html>

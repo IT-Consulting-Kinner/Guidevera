@@ -11,17 +11,18 @@
  */
 ?>
 <aside class="app-sidebar" id="sidebar">
+    <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
     <?php if ($showTopNav): ?>
     <div class="sidebar-tabs" id="sidemenu">
-        <div class="sidebar-tabs__tab active" id="sidemenu_content" onclick="show_sidebar('content')">
+        <div class="sidebar-tabs__tab active" id="sidemenu_content" data-action="showSidebar" data-arg="content">
             <span class="far fa-copy"></span>
             <?= __('Pages') ?>
         </div>
-        <div class="sidebar-tabs__tab" id="sidemenu_index" onclick="show_sidebar('index')">
+        <div class="sidebar-tabs__tab" id="sidemenu_index" data-action="showSidebar" data-arg="index">
             <span class="fas fa-bars"></span>
             <?= __('Index') ?>
         </div>
-        <div class="sidebar-tabs__tab" id="sidemenu_search" onclick="show_sidebar('search')">
+        <div class="sidebar-tabs__tab" id="sidemenu_search" data-action="showSidebar" data-arg="search">
             <span class="fas fa-search"></span>
             <?= __('Search') ?>
         </div>
@@ -32,12 +33,12 @@
         <!-- Template for new tree nodes (cloned by JS) -->
         <div style="display:none">
             <li id="new_li">
-                <div class="hasmenu p-1"><span class="pe-2"></span><a href="javascript:"></a></div>
+                <div class="hasmenu p-1"><span class="pe-2"></span><a href="#"></a></div>
             </li>
         </div>
         <div id="new_page" style="display:none; text-align:center; padding:2rem 1rem">
             <?php if ($isAuth): ?>
-                <button id="new_page_button" onclick="post_page_create(new_page);"><?= __('Create new page') ?></button>
+                <button id="new_page_button" data-action="createPage"><?= __('Create new page') ?></button>
             <?php else: ?>
                 <p style="color:var(--text-secondary)"><?= __('No pages') ?></p>
                 <a class="btn btn-primary btn-sm" href="/user/login"><?= __('login') ?></a>

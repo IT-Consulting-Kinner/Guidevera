@@ -44,14 +44,46 @@ class UsersTable extends Table
         $validator
             ->email('email')->requirePresence('email', 'create');
         $validator
-            ->scalar('gender')->inList('gender', ['male', 'female']);
+            ->scalar('gender')->inList('gender', ['male', 'female'])->allowEmptyString('gender');
         $validator
             ->scalar('role')->inList('role', ['admin', 'contributor', 'editor']);
         $validator
             ->scalar('status')->inList('status', ['active', 'inactive', 'deleted']);
         $validator
+            ->scalar('password');
+        $validator
             ->integer('change_password')->allowEmptyString('change_password');
+        $validator
+            ->scalar('page_tree')
+            ->maxLength('page_tree', 65535)
+            ->allowEmptyString('page_tree')
+            ->add('page_tree', 'validJson', [
+                'rule' => function ($value) {
+                    return json_decode((string)$value, true) !== null || $value === 'null';
+                },
+                'message' => 'page_tree must be valid JSON.',
+            ]);
+        $validator
+            ->boolean('notify_mentions')
+            ->allowEmptyString('notify_mentions');
+        $validator
+            ->scalar('preferences')
+            ->maxLength('preferences', 65535)
+            ->allowEmptyString('preferences')
+            ->add('preferences', 'validJson', [
+                'rule' => function ($value) {
+                    return json_decode((string)$value, true) !== null || $value === 'null';
+                },
+                'message' => 'preferences must be valid JSON.',
+            ]);
 
         return $validator;
+    }
+
+    public function buildRules(\Cake\ORM\RulesChecker $rules): \Cake\ORM\RulesChecker
+    {
+        $rules->add($rules->isUnique(['username'], 'This username is already taken.'));
+        $rules->add($rules->isUnique(['email'], 'This email is already registered.'));
+        return $rules;
     }
 }

@@ -53,7 +53,7 @@ return [
     'App' => [
         'namespace' => 'App',
         'encoding' => 'UTF-8',
-        'defaultLocale' => 'de_DE',
+        'defaultLocale' => 'en_US',
         'defaultTimezone' => 'Europe/Berlin',
         'base' => false,
         'dir' => 'src',
@@ -81,7 +81,7 @@ return [
     'Security' => [
         // IMPORTANT: In production, set the SECURITY_SALT environment variable to a unique random string.
         // The fallback value below is for development ONLY and must not be used in production.
-        'salt' => env('SECURITY_SALT', 'ab65982f846df40f37417be06b12bd942847aa9ee2e5871bb6f2ff1369cc929e'),
+        'salt' => env('SECURITY_SALT'),
     ],
 
     /*
@@ -229,8 +229,8 @@ return [
              * The keys host, port, timeout, username, password, client and tls
              * are used in SMTP transports
              */
-            'host' => 'localhost',
-            'port' => 25,
+            'host' => env('MAIL_HOST', 'localhost'),
+            'port' => (int)env('MAIL_PORT', '587'),
             'timeout' => 30,
             /*
              * It is recommended to set these options through your environment or app_local.php
@@ -238,7 +238,7 @@ return [
             //'username' => null,
             //'password' => null,
             'client' => null,
-            'tls' => false,
+            'tls' => true,
             'url' => null,
         ],
     ],
@@ -426,12 +426,12 @@ return [
      */
     'Session' => [
         'defaults' => 'php',
-        'timeout' => 1440,
+        'timeout' => 120,
         'ini' => [
             'session.cookie_httponly' => true,
-            'session.cookie_samesite' => 'Strict',
-            // Uncomment for HTTPS-only environments:
-            // 'session.cookie_secure' => true,
+            'session.cookie_samesite' => 'Lax',
+            'session.cookie_secure' => true,
+            'session.use_strict_mode' => 1,
         ],
     ],
 
@@ -482,53 +482,51 @@ return [
      * Manual application settings (migrated from app.env)
      */
     'Manual' => [
-        'appName' => 'AppProfileSafe - Support Portal',
+        'appName' => 'Guidevera',
         'appLanguage' => 'en',
         'textDirection' => 'ltr',
         'baseUri' => '/',
         'editorLanguage' => 'en-US',
-        // Features
-        'enablePrint' => false,
-        'enableFeedback' => true,
-        'enableRevisions' => true,
-        'enableDarkMode' => true,
-        'enableTranslations' => false,
-        // Translations
-        'contentLocales' => ['en'],
-        'defaultLocale' => 'en',
         // UI
         'showAuthorDetails' => false,
         'showLinkButton' => true,
-        'showLoginButton' => false,
+        'showLoginButton' => true,
         'showNavigationIcons' => false,
         'showNavigationNumbering' => false,
         'showNavigationRoot' => false,
         'showTopNavigation' => true,
-        'useLogo' => false,
-        'logoPath' => '',
+        'useLogo' => true,
+        'logoPath' => 'img/logo.webp',
         // Uploads
         'maxUploadSize' => 10485760,
+        // Translations
+        'contentLocales' => ['en'],
+        'defaultLocale' => 'en',
         // Notifications (empty = disabled)
         'notifyEmail' => '',
-        // v9 features
+        // Features
+        'enablePrint' => false,
+        'enableFeedback' => false,
+        'enableRevisions' => false,
+        'enableDarkMode' => true,
+        'enableTranslations' => false,
         'enableBreadcrumbs' => true,
-        'enablePrevNext' => true,
-        'enableComments' => true,
-        'enableMentions' => true,
+        'enablePrevNext' => false,
+        'enableComments' => false,
+        'enableMentions' => false,
         'enableFontSize' => true,
         'enablePdfExport' => false,
-        'enableMarkdownExport' => true,
+        'enableMarkdownExport' => false,
         'enableCookieConsent' => true,
-        'enableAuditLog' => true,
+        'enableAuditLog' => false,
         'trashRetentionDays' => 30,
-        // v11 features
         'enableScheduledPublishing' => false,
         'enableReviewProcess' => false,
-        'enableSubscriptions' => true,
+        'enableSubscriptions' => false,
         'enableAcknowledgements' => false,
         'enableInlineComments' => false,
         'enableMediaLibrary' => true,
-        'enableImport' => true,
+        'enableImport' => false,
         'enableWebhooks' => false,
         'enableContentAnalytics' => true,
         'enableSmartLinks' => true,

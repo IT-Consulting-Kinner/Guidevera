@@ -13,7 +13,9 @@ class PagesFixture extends TestFixture
     public array $records = [
         [
             'id' => 1,
+            'created' => '2025-01-01 10:00:00',
             'created_by' => 1,
+            'modified' => '2025-01-05 14:00:00',
             'modified_by' => 1,
             'parent_id' => null,
             'position' => 0,
@@ -27,7 +29,9 @@ class PagesFixture extends TestFixture
         ],
         [
             'id' => 2,
+            'created' => '2025-01-02 11:00:00',
             'created_by' => 1,
+            'modified' => '2025-01-06 09:00:00',
             'modified_by' => 1,
             'parent_id' => 1,
             'position' => 1,
@@ -41,7 +45,9 @@ class PagesFixture extends TestFixture
         ],
         [
             'id' => 3,
+            'created' => '2025-01-03 08:00:00',
             'created_by' => 1,
+            'modified' => '2025-01-03 08:00:00',
             'modified_by' => 1,
             'parent_id' => 1,
             'position' => 2,

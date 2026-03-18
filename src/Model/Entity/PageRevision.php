@@ -13,6 +13,6 @@ class PageRevision extends Entity
 {
     protected array $_accessible = [
         'page_id' => true, 'title' => true, 'description' => true,
-        'content' => true, 'created_by' => true, 'revision_note' => true,
+        'content' => true, 'created_by' => false, 'revision_note' => true,
     ];
 }

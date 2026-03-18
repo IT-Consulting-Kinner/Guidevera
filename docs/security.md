@@ -4,79 +4,51 @@
 
 ### Password Hashing
 
-Passwords are hashed using a two-layer approach:
-
-1. **HMAC-SHA256**: `hash_hmac('sha256', password, SALT)` — normalizes password length and adds a secret
-2. **bcrypt**: `password_hash(hmac_result, PASSWORD_DEFAULT)` — provides adaptive hashing
-
-This two-layer design protects against:
-- Rainbow table attacks (bcrypt's per-hash salt)
-- Length-extension attacks on very long passwords (HMAC pre-hash)
-- Timing attacks (bcrypt's constant-time comparison)
-
-The HMAC salt is a static string defined in `UsersController::PASSWORD_SALT`.
+Two-layer hashing: `password_hash(hash_hmac('sha256', $password, $salt), PASSWORD_DEFAULT)`. The HMAC pre-hash uses the CakePHP Security salt, followed by bcrypt. This protects against extremely long passwords that could cause bcrypt DoS.
 
 ### Session Management
 
-- Sessions are managed by PHP's native session handler
-- Session ID is regenerated after successful login (`$session->renew()`)
-- No "remember me" feature — sessions expire with the browser
-- Session data includes: id, username, fullname, role, gender, email, page_tree, status
+- `session_regenerate_id()` via `$session->renew()` on login (called before writing Auth data to prevent session fixation)
+- Session destroyed on logout
+- `Cache-Control: no-cache, no-store, must-revalidate` on all responses to prevent stale authenticated pages
 
 ### Rate Limiting
 
-Login attempts are rate-limited per IP address:
-- **Storage**: Filesystem-based JSON files in `storage/ratelimit/`
-- **Threshold**: 5 failed attempts within 5 minutes triggers a lockout
-- **Key**: MD5 hash of `"login_" + client_ip`
-- **Reset**: Successful login clears the rate limit counter
+Login attempts are rate-limited per IP. After 5 failed attempts within 15 minutes, further attempts are blocked. Rate limit data is stored in `storage/ratelimit/`.
+
+## Authorization
+
+Role-based access control with hierarchical levels: guest < editor < contributor < admin. `AppController::hasRole()` checks `userLevel >= minLevel`. See [Architecture](architecture.md) for the full permission matrix.
+
+Self-protection: admins cannot change their own role or status via the user management interface.
+
+## Content Security Policy
+
+`CspMiddleware` adds CSP headers with nonce-based script execution:
+
+```
+default-src 'self'; script-src 'self' 'nonce-{random}' 'unsafe-inline' 'unsafe-hashes';
+style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self';
+```
+
+All inline `<script>` tags include the nonce attribute.
 
 ## CSRF Protection
 
-CakePHP's built-in `CsrfProtectionMiddleware` is active for all POST requests.
+CakePHP's built-in `CsrfProtectionMiddleware` is active. All POST requests require a valid CSRF token. AJAX requests include the token via `jQuery.ajaxSetup` with `X-CSRF-Token` header.
 
-- **Forms**: Include a hidden `_csrfToken` field
-- **AJAX**: The layout configures `$.ajaxSetup` to send the token as `X-CSRF-Token` header on every POST request
+## Host Header Validation
+
+`HostHeaderMiddleware` validates the `Host` header against a whitelist to prevent host header injection attacks.
 
 ## HTML Sanitization
 
-User-generated content (page body) is sanitized through a whitelist-based DOMDocument sanitizer (`PagesService::sanitizeHtml()`):
+All user-generated HTML content is sanitized via `PagesService::sanitizeHtml()` before display. This removes `<script>` tags, `on*` event handlers, `javascript:` URLs, and adds `rel="noopener noreferrer"` to external links.
 
-### Allowed Tags (42)
+## File Access Control
 
-`p, br, hr, div, span, blockquote, pre, code, h1-h6, b, strong, i, em, u, s, sub, sup, small, mark, font, ul, ol, li, table, thead, tbody, tfoot, tr, th, td, caption, a, img, figure, figcaption, details, summary`
+Each file has per-role visibility flags (`visible_guest`, `visible_editor`, `visible_contributor`, `visible_admin`). The download endpoint checks the requesting user's role against these flags and returns 403 if access is denied.
 
-### Sanitization Steps
+## Soft Deletes
 
-1. Remove null bytes
-2. Strip dangerous tags and their content: `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<form>`, `<input>`, `<textarea>`, `<select>`, `<button>`, `<applet>`, `<meta>`, `<link>`, `<base>`
-3. Remove all `on*` event handler attributes
-4. Neutralize `javascript:`, `data:`, `vbscript:` URIs in href/src/action attributes
-5. DOMDocument pass: Remove disallowed tags (preserving children), strip disallowed attributes
-6. Sanitize CSS `style` attributes (block `expression()`, `behavior`, `-moz-binding`, malicious `url()`)
-7. Validate href/src against allowed URL schemes: `http`, `https`, `mailto`, `tel`, `//`
-8. Force `rel="noopener noreferrer"` on `target="_blank"` links
-
-## Host Header Injection Protection
-
-The `HostHeaderMiddleware` validates the HTTP `Host` header against the configured `App.fullBaseUrl` in production. This prevents:
-- Password reset link manipulation
-- Cache poisoning attacks
-- Web cache deception
-
-In debug mode, the middleware is bypassed.
-
-## File Upload Security
-
-- **Filename validation**: Only `[a-zA-Z0-9_\-\.]` characters allowed
-- **Hidden file rejection**: Filenames starting with `.` are blocked
-- **Storage isolation**: Files are stored outside webroot in `storage/media/`
-- **Controlled serving**: Downloads go through `FilesController::download()`, not direct file access
-- **Contributor+**: Upload and delete require contributor role or higher
-
-## Input Validation
-
-- All POST-only endpoints use `$this->request->allowMethod(['post'])`
-- Integer IDs are cast with `(int)` before use
-- Status values are validated against `['active', 'inactive']`
-- Search queries are stripped of non-alphanumeric characters
+Pages use soft delete (`deleted_at` timestamp). Users are set to `status='deleted'` to preserve referential integrity. Trash auto-purge is configurable via `trashRetentionDays`.

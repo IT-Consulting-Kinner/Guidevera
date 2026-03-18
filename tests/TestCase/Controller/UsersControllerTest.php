@@ -38,11 +38,7 @@ class UsersControllerTest extends TestCase
     {
         $this->post('/user/login', ['username' => 'nobody', 'password' => 'wrong']);
         $code = $this->_response->getStatusCode();
-        // Failed login: re-renders form (200) or redirects back (302)
-        $this->assertTrue(
-            $code === 200 || $code === 302,
-            "Expected 200 or 302, got {$code}"
-        );
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testLogoutRedirects(): void
@@ -76,9 +72,6 @@ class UsersControllerTest extends TestCase
         ]);
         $this->post('/user/save_page_tree', ['strElements' => 'open[0]=1']);
         $code = $this->_response->getStatusCode();
-        $this->assertTrue(
-            $code === 200 || $code === 302,
-            "Expected 200 or 302, got {$code}"
-        );
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 }

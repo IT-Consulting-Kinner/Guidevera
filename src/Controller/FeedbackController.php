@@ -34,7 +34,13 @@ class FeedbackController extends AppController
             return $this->jsonError('invalid_feedback');
         }
 
-        $clientIp = $this->request->clientIp();
+        // Only allow feedback on active pages
+        $page = $this->fetchTable('Pages')->find()->where(['id' => $pageId])->first();
+        if (!$page || $page->status !== 'active') {
+            return $this->jsonError('page_not_active');
+        }
+
+        $clientIp = $this->rateLimitIp();
         $fb = $this->fetchTable('PageFeedback');
 
         // Rate limit
@@ -49,9 +55,9 @@ class FeedbackController extends AppController
         $entity = $fb->newEntity([
             'page_id' => $pageId, 'rating' => $rating,
             'comment' => mb_substr($comment, 0, 2000),
-            'client_ip' => $clientIp,
-            'status' => empty($comment) ? 'approved' : 'pending',
-        ]);
+        ], ['fields' => ['page_id', 'rating', 'comment']]);
+        $entity->set('client_ip', $clientIp);
+        $entity->set('status', empty($comment) ? 'approved' : 'pending');
 
         if ($fb->save($entity)) {
             if (!empty($comment)) {
@@ -85,11 +91,12 @@ class FeedbackController extends AppController
             return $this->jsonError('invalid_action');
         }
 
-        $this->fetchTable('PageFeedback')->updateAll(
+        $affected = $this->fetchTable('PageFeedback')->updateAll(
             ['status' => $action === 'approve' ? 'approved' : 'rejected'],
             ['id' => $feedbackId]
         );
-        return $this->jsonSuccess(['intAffectedRows' => 1]);
+
+        return $this->jsonSuccess(['intAffectedRows' => $affected]);
     }
 
     /**
@@ -97,6 +104,7 @@ class FeedbackController extends AppController
      */
     public function pending(): ?\Cake\Http\Response
     {
+        $this->request->allowMethod(['post']);
         $this->autoRender = false;
         if (!(Configure::read('Manual.enableFeedback') ?? false)) {
             return $this->jsonError('feature_disabled');
@@ -114,8 +122,8 @@ class FeedbackController extends AppController
         foreach ($items as $f) {
             $list[] = [
                 'id' => $f->id, 'page_id' => $f->page_id,
-                'page_title' => $f->page->title ?? '',
-                'rating' => $f->rating, 'comment' => $f->comment,
+                'page_title' => $f->page?->title ?? '',
+                'rating' => $f->rating, 'comment' => $f->comment ?? '',
                 'created' => $f->created->format('d.m.Y H:i'),
             ];
         }

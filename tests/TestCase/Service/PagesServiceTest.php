@@ -9,7 +9,7 @@ use Cake\TestSuite\TestCase;
 
 class PagesServiceTest extends TestCase
 {
-    // ── Sanitizer Tests ──
+    // ── Sanitizer ──
 
     public function testSanitizeHtmlStripsScripts(): void
     {
@@ -58,26 +58,20 @@ class PagesServiceTest extends TestCase
         $this->assertEquals('', PagesService::sanitizeHtml(''));
     }
 
-    // ── Chapter Numbering Tests ──
+    // ── Chapter Numbering ──
 
     public function testChapterNumberingWithNumbering(): void
     {
         $pages = $this->buildPageTree();
         $result = PagesService::calculateChapterNumbering($pages, true);
-        // Child pages should have chapter numbers prepended
         $childTitle = $result[1]['title'] ?? $result[1]->title ?? '';
-        $this->assertMatchesRegularExpression(
-            '/^\d/',
-            $childTitle,
-            'Child page title should start with chapter number'
-        );
+        $this->assertMatchesRegularExpression('/^\d/', $childTitle, 'Child page title should start with chapter number');
     }
 
     public function testChapterNumberingWithoutNumbering(): void
     {
         $pages = $this->buildPageTree();
         $result = PagesService::calculateChapterNumbering($pages, false);
-        // Without numbering, title should not have chapter prefix
         $firstTitle = $result[0]['title'] ?? $result[0]->title ?? '';
         $this->assertStringNotContainsString('1.', $firstTitle);
     }
@@ -86,6 +80,20 @@ class PagesServiceTest extends TestCase
     {
         $result = PagesService::calculateChapterNumbering([], true);
         $this->assertEmpty($result);
+    }
+
+    public function testInactivePageSkippedInNumbering(): void
+    {
+        $pages = [
+            ['id' => 1, 'parent_id' => 0, 'title' => 'Root', 'status' => 'active'],
+            ['id' => 2, 'parent_id' => 1, 'title' => 'Active', 'status' => 'active'],
+            ['id' => 3, 'parent_id' => 1, 'title' => 'Draft', 'status' => 'inactive'],
+            ['id' => 4, 'parent_id' => 1, 'title' => 'Active2', 'status' => 'active'],
+        ];
+        $result = PagesService::calculateChapterNumbering($pages, true);
+        // Active2 should be chapter 2, not 3 (draft skipped)
+        $title4 = $result[3]['title'] ?? '';
+        $this->assertStringContainsString('2', $title4);
     }
 
     // ── Title Lookup ──
@@ -113,8 +121,67 @@ class PagesServiceTest extends TestCase
         ];
         $numbered = PagesService::calculateChapterNumbering($pages, false);
         $nav = PagesService::calculateNavigation(2, $numbered);
-        $this->assertArrayHasKey('previousId', $nav);
-        $this->assertArrayHasKey('nextId', $nav);
+        $this->assertEquals(1, $nav['previousId']);
+        $this->assertEquals(3, $nav['nextId']);
+    }
+
+    public function testCalculateNavigationExcludesRootWhenHidden(): void
+    {
+        $pages = [
+            ['id' => 1, 'title' => 'Root', 'parent_id' => 0, 'status' => 'active'],
+            ['id' => 2, 'title' => 'Page A', 'parent_id' => 1, 'status' => 'active'],
+            ['id' => 3, 'title' => 'Page B', 'parent_id' => 1, 'status' => 'active'],
+        ];
+        // showRoot = false: root should not appear as prev/next
+        $nav = PagesService::calculateNavigation(2, $pages, false);
+        $this->assertNotEquals(1, $nav['previousId'], 'Root should not be a prev/next target when hidden');
+    }
+
+    public function testCalculateNavigationFirstAndLastPage(): void
+    {
+        $pages = [
+            ['id' => 1, 'title' => 'Only', 'parent_id' => 0, 'status' => 'active'],
+        ];
+        $nav = PagesService::calculateNavigation(1, $pages);
+        $this->assertEquals(0, $nav['previousId']);
+        $this->assertEquals(0, $nav['nextId']);
+    }
+
+    // ── Breadcrumbs ──
+
+    public function testBuildBreadcrumbs(): void
+    {
+        $pages = [
+            ['id' => 1, 'title' => 'Root', 'parent_id' => 0, 'status' => 'active'],
+            ['id' => 2, 'title' => 'Section', 'parent_id' => 1, 'status' => 'active'],
+            ['id' => 3, 'title' => 'Page', 'parent_id' => 2, 'status' => 'active'],
+        ];
+        $crumbs = PagesService::buildBreadcrumbs(3, $pages);
+        $this->assertCount(3, $crumbs);
+        $this->assertEquals('Root', $crumbs[0]['title']);
+        $this->assertEquals('Page', $crumbs[2]['title']);
+    }
+
+    public function testBuildBreadcrumbsUnknownPage(): void
+    {
+        $crumbs = PagesService::buildBreadcrumbs(999, []);
+        $this->assertEmpty($crumbs);
+    }
+
+    // ── getRootPageId / shouldHideRoot ──
+
+    public function testGetRootPageId(): void
+    {
+        $pages = [
+            ['id' => 5, 'title' => 'Root', 'parent_id' => 0, 'status' => 'active'],
+            ['id' => 6, 'title' => 'Child', 'parent_id' => 5, 'status' => 'active'],
+        ];
+        $this->assertEquals(5, PagesService::getRootPageId($pages));
+    }
+
+    public function testGetRootPageIdEmpty(): void
+    {
+        $this->assertEquals(0, PagesService::getRootPageId([]));
     }
 
     // ── buildNavigationHtml ──
@@ -126,9 +193,7 @@ class PagesServiceTest extends TestCase
             ['id' => 2, 'title' => 'Page One', 'parent_id' => 1, 'status' => 'active'],
         ];
         $html = PagesService::buildNavigationHtml($pages, 1, true, true, false);
-        // Guest: should have real href, not javascript:
         $this->assertStringContainsString('href="/pages/', $html);
-        $this->assertStringNotContainsString('onclick="post_page_show', $html);
     }
 
     public function testBuildNavigationHtmlAuthLinks(): void
@@ -138,8 +203,7 @@ class PagesServiceTest extends TestCase
             ['id' => 2, 'title' => 'Page One', 'parent_id' => 1, 'status' => 'active'],
         ];
         $html = PagesService::buildNavigationHtml($pages, 1, true, true, true);
-        // Auth: should have javascript onclick
-        $this->assertStringContainsString('onclick="post_page_show', $html);
+        $this->assertStringContainsString('data-action="postPageShow"', $html);
     }
 
     public function testBuildNavigationHtmlHidesInactiveForGuest(): void

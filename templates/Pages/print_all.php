@@ -30,7 +30,7 @@ $showAuthor = $public['showAuthorDetails'] ?? true;
         $toc[] = ['title' => $title, 'level' => $level];
     ?>
         <?php if ($first): ?>
-            <h1><button onclick="window.print()">Print</button><br/><?= h($title) ?></h1>
+            <h1><button data-action="windowPrint">Print</button><br/><?= h($title) ?></h1>
             <?php if ($showAuthor): ?><h4><?= __('Created') ?>: <?= date('d.m.Y') ?><br/><?= h($auth['fullname'] ??
                 '') ?></h4><?php endif; ?>
             <div class="pagebreak"> </div>
@@ -51,7 +51,7 @@ $showAuthor = $public['showAuthorDetails'] ?? true;
             <h3><?= h($title) ?></h3>
         <?php endif; ?>
         <?php if (!empty(strip_tags($content))): ?>
-            <div><?= $content ?></div>
+            <div><?= \App\Service\PagesService::sanitizeHtml($content) ?></div>
             <div class="pagebreak"> </div>
         <?php endif; ?>
     <?php endforeach; ?>

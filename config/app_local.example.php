@@ -1,97 +1,56 @@
 <?php
 
-use function Cake\Core\env;
-
 /*
- * Local configuration file to provide any overrides to your app.php configuration.
- * Copy and save this file as app_local.php and make changes as required.
- * Note: It is not recommended to commit files with credentials such as app_local.php
- * into source code version control.
+ * Local configuration — overrides values from app.php.
+ *
+ * Copy this file to app_local.php and adjust as needed.
+ * This file is DEEP-MERGED into app.php:
+ *   - You only need to define the values you want to CHANGE.
+ *   - All other values from app.php remain unchanged.
+ *   - Nested arrays (like 'Manual') are merged key-by-key, not replaced.
+ *
+ * Do NOT commit app_local.php to version control.
  */
 return [
     /*
-     * Debug Level:
-     *
-     * Production Mode:
-     * false: No error messages, errors, or warnings shown.
-     *
-     * Development Mode:
-     * true: Errors and warnings shown.
+     * Debug: false for production, true for development.
      */
-    'debug' => filter_var(env('DEBUG', true), FILTER_VALIDATE_BOOLEAN),
+    'debug' => false,
 
     /*
-     * Security and encryption configuration
+     * Security salt — MUST be unique per installation.
+     * Generate with: php -r "echo bin2hex(random_bytes(32));"
      *
-     * - salt - A random string used in security hashing methods.
-     *   The salt value is also used as the encryption key.
-     *   You should treat it as extremely sensitive data.
+     * IMPORTANT: Set this here, NOT as environment variable.
+     * Environment variables are not available to the webserver process.
      */
     'Security' => [
-        'salt' => env('SECURITY_SALT', '__SALT__'),
+        'salt' => '__SALT__',
     ],
 
     /*
-     * Connection information used by the ORM to connect
-     * to your application's datastores.
-     *
-     * See app.php for more configuration options.
+     * Database connection.
      */
     'Datasources' => [
         'default' => [
             'host' => 'localhost',
-            /*
-             * CakePHP will use the default DB port based on the driver selected
-             * MySQL on MAMP uses port 8889, MAMP users will want to uncomment
-             * the following line and set the port accordingly
-             */
-            //'port' => 'non_standard_port_number',
-
-            'username' => 'my_app',
+            'username' => 'guidevera',
             'password' => 'secret',
-
-            'database' => 'my_app',
-            /*
-             * If not using the default 'public' schema with the PostgreSQL driver
-             * set it here.
-             */
-            //'schema' => 'myapp',
-
-            /*
-             * You can use a DSN string to set the entire configuration
-             */
-            'url' => env('DATABASE_URL', null),
-        ],
-
-        /*
-         * The test connection is used during the test suite.
-         */
-        'test' => [
-            'host' => 'localhost',
-            //'port' => 'non_standard_port_number',
-            'username' => 'my_app',
-            'password' => 'secret',
-            'database' => 'test_myapp',
-            //'schema' => 'myapp',
-            'url' => env('DATABASE_TEST_URL', null),
+            'database' => 'guidevera',
         ],
     ],
 
     /*
-     * Email configuration.
+     * Override any Manual settings from app.php.
+     * Only include the keys you want to change.
      *
-     * Host and credential configuration in case you are using SmtpTransport
+     * Example: Change app name and enable review process:
      *
-     * See app.php for more configuration options.
+     * 'Manual' => [
+     *     'appName' => 'My Knowledge Base',
+     *     'enableReviewProcess' => true,
+     * ],
+     *
+     * All other Manual keys from app.php remain unchanged.
      */
-    'EmailTransport' => [
-        'default' => [
-            'host' => 'localhost',
-            'port' => 25,
-            'username' => null,
-            'password' => null,
-            'client' => null,
-            'url' => env('EMAIL_TRANSPORT_DEFAULT_URL', null),
-        ],
-    ],
 ];

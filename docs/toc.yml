@@ -20,7 +20,7 @@
 - name: Frontend
   href: frontend/
   items:
-    - name: JavaScript (pages.js)
+    - name: JavaScript
       href: frontend/javascript.md
     - name: CSS Architecture
       href: frontend/css.md

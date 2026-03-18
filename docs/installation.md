@@ -2,126 +2,103 @@
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.1 or higher with extensions: intl, mbstring, pdo_mysql
 - MySQL 5.7+ or MariaDB 10.3+
-- Composer 2.x
-- Apache with `mod_rewrite` or Nginx with URL rewriting
+- Apache with mod_rewrite or Nginx
+- Composer
 
-## Step-by-Step Setup
+## Steps
 
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url> manual
-cd manual
-```
-
-### 2. Install Dependencies
+### 1. Install Dependencies
 
 ```bash
 composer install --no-dev
 ```
 
-### 3. Configure Database
-
-Create a MySQL database:
+### 2. Configure Database + Salt
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE manual CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+cp config/app_local.example.php config/app_local.php
 ```
 
-Edit `config/app_local.php` (create it if it doesn't exist):
+Edit `config/app_local.php`:
 
 ```php
-<?php
 return [
     'Datasources' => [
         'default' => [
-            'driver' => \Cake\Database\Driver\Mysql::class,
             'host' => 'localhost',
             'username' => 'your_db_user',
             'password' => 'your_db_password',
-            'database' => 'your_db_name',
-            'encoding' => 'utf8mb4',
+            'database' => 'guidevera',
         ],
+    ],
+    'Security' => [
+        'salt' => 'your-unique-random-string-at-least-64-characters',
     ],
 ];
 ```
 
-### 4. Run the Installer
+**Critical:** The Security salt MUST be set in `app_local.php`, not as an environment variable. Environment variables are not available to the webserver process (Apache/PHP-FPM), causing CLI and webserver to use different salts which breaks login.
+
+**Database name:** Do not use dots in the database name — MySQL interprets dots as schema separators.
+
+### 3. Run Installer
 
 ```bash
 bin/cake install
 ```
 
-This command:
-1. Tests the database connection
-2. Creates all tables from `db/schema.sql`
-3. Creates the initial admin account (username and password shown in terminal output)
-4. Verifies file permissions on tmp/, logs/, storage/
+This creates all 17 tables, the admin account, and required storage directories. Credentials are shown in the terminal.
 
-### 5. Set File Permissions
+### 4. Set Permissions
 
 ```bash
-chmod -R 775 tmp/ logs/
-mkdir -p storage/media storage/ratelimit
-chmod -R 775 storage/
+chown -R www-data:www-data storage/ tmp/ logs/
 ```
 
-### 6. Configure Web Server
+### 5. Configure Webserver
 
-#### Apache
+Set DocumentRoot to the `webroot/` directory.
 
-Ensure `mod_rewrite` is enabled and `.htaccess` overrides are allowed:
-
+Apache (`.htaccess` files are included):
 ```apache
-<Directory /path/to/manual/webroot>
-    AllowOverride All
-    Require all granted
-</Directory>
+<VirtualHost *:80>
+    DocumentRoot /path/to/guidevera/webroot
+    <Directory /path/to/guidevera/webroot>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
 ```
 
-The included `webroot/.htaccess` handles URL rewriting.
+### 6. Configure Cron Jobs (Optional)
 
-#### Nginx
-
-```nginx
-server {
-    root /path/to/manual/webroot;
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$args;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    # Block access to storage directory
-    location /storage/ {
-        deny all;
-    }
-}
+```cron
+*/5 * * * * cd /path/to/guidevera && bin/cake publish-scheduler
+0 2 * * *   cd /path/to/guidevera && bin/cake quality-check
 ```
 
-### 7. First Login
+## Upgrading
 
-1. Open the application in a browser
-2. The admin password is displayed once in the terminal during `bin/cake install` — save it immediately
-3. Log in with username `admin` and the displayed password
-4. You will be prompted to change the password immediately
+When upgrading from an earlier version, apply schema migrations manually:
 
-## Running Tests
+```sql
+-- Add media_folders table
+CREATE TABLE IF NOT EXISTS media_folders (...);
 
-```bash
-composer require --dev phpunit/phpunit
-vendor/bin/phpunit
+-- Add new columns to media_files
+ALTER TABLE media_files
+  ADD COLUMN folder_id bigint UNSIGNED DEFAULT NULL,
+  ADD COLUMN display_mode varchar(10) NOT NULL DEFAULT 'download',
+  ADD COLUMN visible_guest tinyint(1) NOT NULL DEFAULT 1,
+  ADD COLUMN visible_editor tinyint(1) NOT NULL DEFAULT 1,
+  ADD COLUMN visible_contributor tinyint(1) NOT NULL DEFAULT 1,
+  ADD COLUMN visible_admin tinyint(1) NOT NULL DEFAULT 1,
+  ADD COLUMN download_count int UNSIGNED NOT NULL DEFAULT 0;
+
+-- Convert timestamps to datetime (if upgrading from timestamp-based schema)
+ALTER TABLE pages MODIFY created datetime NOT NULL, MODIFY modified datetime NOT NULL;
 ```
 
-Test suites:
-- `tests/TestCase/Service/PagesServiceTest.php` — Sanitizer, numbering, navigation
-- `tests/TestCase/Controller/PagesControllerTest.php` — API endpoints, auth guards
-- `tests/TestCase/Controller/UsersControllerTest.php` — Login, CSRF, redirects
+Then clear the cache: `bin/cake cache clear_all`

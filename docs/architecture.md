@@ -3,98 +3,111 @@
 ## Request Flow
 
 ```
-Browser Request
-    │
-    ├── Static Assets (webroot/) → Apache/Nginx serves directly
-    │
-    └── Dynamic Request → CakePHP Router
-            │
-            ├── HostHeaderMiddleware (validates Host header in production)
-            ├── CsrfProtectionMiddleware (validates CSRF tokens)
-            ├── RoutingMiddleware (maps URL to controller/action)
-            │
-            └── Controller Action
-                    │
-                    ├── AppController::beforeFilter()
-                    │   ├── Read session auth → $auth
-                    │   ├── Read Manual config → $public
-                    │   └── Extract CSRF token → $csrfToken
-                    │
-                    ├── SSR (GET /pages, /pages/{id})
-                    │   └── Renders full HTML with navigation tree
-                    │
-                    └── JSON API (POST /pages/show, /pages/edit, ...)
-                        └── Returns JSON → Client renders HTML
+Browser → Apache (.htaccess rewrite) → webroot/index.php
+  → CakePHP Middleware Stack:
+    1. ErrorHandlerMiddleware
+    2. HostHeaderMiddleware (validates Host header)
+    3. CspMiddleware (Content-Security-Policy with nonces)
+    4. RoutingMiddleware
+    5. BodyParserMiddleware
+    6. CsrfProtectionMiddleware
+  → Controller Action → JSON Response or Template Render
 ```
 
-## Data Flow: Page Display
+## SPA Hybrid Architecture
 
-### Guest (First Visit)
+Guidevera uses a hybrid approach: the first page load is server-side rendered (SSR) for SEO and fast first paint. Subsequent navigation is handled client-side via JSON APIs.
 
-1. `GET /pages` → `PagesController::index()`
-2. Server loads all pages, builds SSR navigation HTML
-3. Renders full page with content and navigation tree
-4. Navigation links are real URLs (`/pages/{id}/{slug}`)
-5. `pages.js` loads, reads `window.pageConfig.ssrTree`
-6. JS hydrates the tree (makes it interactive) without AJAX
+- **Guest users:** SSR navigation tree, SSR page content including feedback and prev/next links. No JavaScript required for basic reading.
+- **Authenticated users:** SSR on first load, then JavaScript takes over. Page tree, content, and all features are loaded via AJAX (`/pages/show`, `/pages/edit`, `/pages/get_tree`).
+- **Edit mode:** Summernote WYSIWYG editor with custom plugins (file browser, smart links, media picker).
 
-### Authenticated User (AJAX Navigation)
-
-1. `GET /pages` → Same SSR render as guest
-2. `pages.js` detects `isAuth=true`, replaces SSR links with AJAX handlers
-3. User clicks page → `POST /pages/show {id: 42}` → JSON response
-4. `renderShowView(data)` builds HTML from JSON, injects into `#page`
-5. Tree highlight updates, folders expand to show current page
-
-## Data Flow: Page Editing
+## Role Hierarchy
 
 ```
-User clicks Edit
-    │
-    ├── editPage(id) sets state.mode = 'edit'
-    ├── POST /pages/edit {id} → JSON with raw page data
-    ├── renderEditView(data) builds form + Summernote editor
-    │
-    ├── User edits content in Summernote WYSIWYG
-    │
-    ├── User clicks Save
-    │   ├── Summernote content → hidden textarea
-    │   ├── jQuery('#pageform').serializeArray()
-    │   ├── POST /pages/save {id, title, description, content, keywords}
-    │   └── Server saves page + updates keyword index
-    │
-    └── User clicks Close
-        ├── Check state.hasChanges → confirm dialog if unsaved
-        └── showPage(currentId) → back to read-only view
+guest (0) < editor (1) < contributor (2) < admin (3)
 ```
 
-## Tree Structure
+`hasRole(minRole)` checks `userLevel >= minLevel`.
 
-Pages use a flat table with `parent_id` and `position` columns:
+| Action | Editor | Contributor | Admin |
+|--------|--------|-------------|-------|
+| View pages | ✓ | ✓ | ✓ |
+| Edit/save pages | ✓ | ✓ | ✓ |
+| Create/delete pages | — | ✓ | ✓ |
+| Set page status (active/inactive) | — | ✓ | ✓ |
+| Reorder pages | — | ✓ | ✓ |
+| Upload files | ✓ | ✓ | ✓ |
+| Delete files / manage folders | — | ✓ | ✓ |
+| File settings (visibility, display mode) | — | ✓ | ✓ |
+| Revisions (no workflow) | ✓ | ✓ | ✓ |
+| Revisions (with workflow) | — | ✓ | ✓ |
+| Trash restore | — | ✓ | ✓ |
+| Trash purge | — | — | ✓ |
+| User management | — | — | ✓ |
 
-```
-id | parent_id | position | title
----|-----------|----------|------
-1  | NULL      | 0        | Root
-2  | 1         | 1        | Chapter 1
-3  | 1         | 2        | Chapter 2
-4  | 2         | 3        | Section 1.1
-5  | 2         | 4        | Section 1.2
-```
+Editors with workflow enabled: save sets `workflow_status` to `'review'` automatically.
 
-- `parent_id = NULL` → root-level page
-- `position` → global sort order (0-based, set by drag-and-drop)
-- No `lft`/`rght` columns — no TreeBehavior dependency
+## Page Status vs. Workflow Status
 
-## Component Responsibilities
+Every page has two independent status fields:
 
-| Component              | Responsibility                              |
-|------------------------|---------------------------------------------|
-| `PagesController`      | Page CRUD, tree operations, JSON APIs       |
-| `PageContentComponent` | Search, keyword index, print views          |
-| `PagesService`         | HTML sanitization, chapter numbering, SSR navigation |
-| `UsersController`      | Login, logout, profile, user admin          |
-| `FilesController`      | File upload, download, browse               |
-| `AppController`        | Auth helpers, JSON helpers, config injection |
-| `pages.js`             | Client-side rendering, tree management, editor |
-| `app.css`              | All custom styles (single consolidated file) |
+- **`status`** (`active` / `inactive`) — controls visibility to guests. Toggle requires Contributor+.
+- **`workflow_status`** (`draft` / `review` / `published` / `archived`) — editorial state. Only visible in the UI when `enableReviewProcess = true`. Editors can move between draft/review; Contributors/Admins can publish or archive.
+
+When `enableReviewProcess = false`, new pages are created with `workflow_status = 'published'` and the workflow UI is hidden entirely.
+
+## File Management
+
+Files are stored in `storage/media/` as `{id}_{originalname}`. Referenced by ID in URLs: `/downloads/{id}/{originalname}`. This means renaming, moving between folders, or reorganising never breaks existing links in page content.
+
+Each file has:
+- `display_mode` (`inline` / `download`) — controls browser behaviour on download
+- Per-role visibility flags (`visible_guest`, `visible_editor`, `visible_contributor`, `visible_admin`)
+- `download_count` — atomic increment on each access
+
+## Locale Detection
+
+When a user requests a page, the content language is determined by a three-step fallback:
+1. Explicit `?locale=` query parameter or POST field
+2. Session-stored preference (`userLocale`)
+3. Browser `Accept-Language` header
+
+If no match is found, `defaultLocale` from config is used.
+
+## Quality Check
+
+`bin/cake quality-check` analyses all pages (excluding root if `showNavigationRoot = false`) for:
+- Missing description
+- Stale content (not updated in `staleContentMonths` months)
+- Empty content
+- Missing keywords
+- Missing tags (only when `enableSmartLinks = true`)
+- Heading level issues
+- Broken internal links
+- Missing referenced images
+
+Results are cached and displayed in the Dashboard quality report widget.
+
+## Controllers
+
+- **PagesController** (55+ actions): All page operations, dashboard, search, export, import, workflow, subscriptions, acknowledgements, inline comments, analytics, smart links
+- **UsersController**: Login/logout, profile, user CRUD, page tree, user search
+- **FilesController**: Upload, download, delete, folders, move, browse, settings
+- **RevisionsController**: List, show, restore (with role-aware workflow check)
+- **FeedbackController**: Submit (public, rate-limited) and moderate feedback
+- **CommentsController**: Page comments with @mentions
+- **MediaController**: Media library overview + file replacement
+
+## Services
+
+- **PagesService**: HTML sanitizer (DOMDocument + regex, two-pass), chapter numbering, navigation, breadcrumbs, title lookup, keyword loading, root page helpers (`getRootPageId`, `shouldHideRoot`)
+- **UploadService**: File upload with size/type validation and timestamped naming
+- **WebhookService**: Async HTTP POST dispatch via file queue (`tmp/webhook_queue/`), SSRF protection, DNS pinning
+
+## Commands
+
+- **InstallCommand**: Creates all 17 tables, admin account, storage directories
+- **PublishSchedulerCommand**: Auto-publish pages where `publish_at <= now`, auto-expire where `expire_at <= now`. Run every 5 minutes via cron.
+- **QualityCheckCommand**: Reports content quality issues, purges expired trash, caches results for dashboard. Run nightly via cron.
+- **WebhookWorkerCommand**: Processes queued webhook events from `tmp/webhook_queue/`

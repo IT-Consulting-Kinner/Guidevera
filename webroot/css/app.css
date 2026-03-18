@@ -25,12 +25,16 @@
   --color-success-text: #1e7e34;
   --color-error-bg: #fce8e6;
   --color-error-text: #c5221f;
+  --color-warning-bg: #fff3cd;
+  --color-warning-text: #856404;
+  --color-warning-border: #ffc107;
   --code-bg: #f1f3f5;
   --code-text: #c7254e;
   --pre-bg: #1e2530;
   --pre-text: #d4d9e0;
-  --header-height: 56px;
-  --sidebar-width: 280px;
+  --header-height: 3.5rem;
+  --sidebar-width: 20rem;
+  --tabs-height: 3rem;
   --radius: 8px;
   --radius-sm: 4px;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
@@ -55,7 +59,7 @@ body {
   height: var(--header-height); background: var(--bg-header);
   border-bottom: 1px solid var(--border-color);
   display: flex; align-items: center; padding: 0 1rem;
-  position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm);
+  position: sticky; top: 0; z-index: 200; box-shadow: var(--shadow-sm);
 }
 .app-header__brand {
   display: flex; align-items: center; gap: 0.5rem;
@@ -104,17 +108,25 @@ body {
 
 /* ── Sidebar ── */
 .app-sidebar {
-  width: var(--sidebar-width); min-width: var(--sidebar-width);
+  width: var(--sidebar-width); min-width: 12rem; max-width: 40rem;
   background: var(--bg-sidebar); border-right: 1px solid var(--border-color);
-  display: flex; flex-direction: column; overflow: hidden;
+  display: flex; flex-direction: column; overflow: hidden; position: relative; flex-shrink: 0;
+}
+.sidebar-resize-handle {
+  position: absolute; top: 0; right: 0; width: 5px; height: 100%;
+  cursor: col-resize; z-index: 10;
+}
+.sidebar-resize-handle:hover, .sidebar-resize-handle.active {
+  background: var(--brand-primary); opacity: 0.4;
 }
 .sidebar-tabs {
   display: flex; border-bottom: 1px solid var(--border-color);
   background: var(--bg-surface); flex-shrink: 0;
+  height: var(--tabs-height);
 }
 .sidebar-tabs__tab {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
-  padding: 0.6rem 0.25rem; font-size: 0.7rem; color: var(--text-secondary);
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem;
+  font-size: 0.7rem; color: var(--text-secondary);
   text-decoration: none; border-bottom: 2px solid transparent;
   transition: all var(--transition); cursor: pointer;
 }
@@ -175,10 +187,20 @@ body {
 
 /* Toolbar */
 #content_actions {
-  position: sticky; top: 0; z-index: 10; background: var(--bg-toolbar);
+  position: sticky; top: 0; z-index: 101; background: var(--bg-toolbar);
   border-bottom: 1px solid var(--border-color);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0.35rem 0.75rem; min-height: 44px;
+  height: var(--tabs-height); padding: 0 0.5rem;
+}
+#content_actions .col-auto { display: flex; align-items: center; padding: 0; }
+#content_actions span[onclick], #content_actions span.fas, #content_actions span.far, #content_actions span.fab {
+  padding: 0.45rem 0.55rem !important; margin: 0.2rem !important;
+  font-size: 0.95rem; cursor: pointer; border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  color: var(--text-secondary);
+}
+#content_actions span[onclick]:hover, #content_actions span.fas:hover, #content_actions span.far:hover, #content_actions span.fab:hover {
+  background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-color) !important;
 }
 .toolbar-actions { display: flex; align-items: center; gap: 0.25rem; }
 .toolbar-btn {
@@ -191,7 +213,7 @@ body {
 .toolbar-btn.danger:hover { color: var(--color-error-text); background: var(--color-error-bg); }
 
 /* Content Pane */
-#content_pane { padding: 2rem 2.5rem 4rem; max-width: 900px; margin: 0 auto; }
+#content_pane { padding: 1.25rem 2rem; }
 h3#page_title {
   font-size: 1.75rem; font-weight: 700; margin: 0 0 1.5rem;
   padding-bottom: 0.75rem; border-bottom: 2px solid var(--border-light);
@@ -199,9 +221,12 @@ h3#page_title {
 h3#page_title.inactive { color: var(--color-error-text); }
 
 /* Content typography */
-#content_pane h1, .note-editable h1 { font-size: 1.75rem; font-weight: 700; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--brand-primary); }
-#content_pane h2, .note-editable h2 { font-size: 1.4rem; font-weight: 600; margin: 1.75rem 0 0.75rem; }
-#content_pane h3, .note-editable h3 { font-size: 1.2rem; font-weight: 600; margin: 1.5rem 0 0.6rem; }
+body #content_pane h1, body .note-editable h1 { font-size: 1.75rem; font-weight: 700; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--brand-primary); }
+body #content_pane h2, body .note-editable h2 { font-size: 1.4rem; font-weight: 600; margin: 1.75rem 0 0.75rem; }
+body #content_pane h3, body .note-editable h3 { font-size: 1.2rem; font-weight: 600; margin: 1.5rem 0 0.6rem; }
+body #content_pane h4, body .note-editable h4 { font-size: 1.05rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+body #content_pane h5, body .note-editable h5 { font-size: 0.95rem; font-weight: 600; margin: 1rem 0 0.4rem; }
+body #content_pane h6, body .note-editable h6 { font-size: 0.85rem; font-weight: 600; margin: 1rem 0 0.4rem; }
 #content_pane p, .note-editable p { margin: 0 0 1rem; }
 #content_pane code, .note-editable code { font-family: var(--font-mono); font-size: 0.85em; background: var(--code-bg); color: var(--code-text); padding: 0.15em 0.4em; border-radius: var(--radius-sm); }
 #content_pane pre, .note-editable pre { background: var(--pre-bg); color: var(--pre-text); font-family: var(--font-mono); font-size: 0.85em; padding: 1.25rem 1.5rem; border-radius: var(--radius); overflow-x: auto; margin: 1rem 0; }
@@ -219,8 +244,8 @@ h3#page_title.inactive { color: var(--color-error-text); }
 #content_pane hr { border: none; height: 1px; background: var(--border-color); margin: 2rem 0; }
 
 /* Edit mode */
-#content_wrapper_edit { padding: 1.25rem 2rem; max-width: 900px; margin: 0 auto; }
-#content_wrapper_edit span { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.25rem; }
+#content_wrapper_edit { padding: 1.25rem 2rem; }
+#content_wrapper_edit > span { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.25rem; }
 #content_wrapper_edit .form-control { border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; font-size: 0.9rem; }
 #content_wrapper_edit .form-control:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(26,115,232,0.1); outline: none; }
 
@@ -260,6 +285,7 @@ h3#page_title.inactive { color: var(--color-error-text); }
 
 /* ── Dark Mode ── */
 html.dark {
+  background-color: var(--bg-surface) !important;
   --brand-primary: #6eaaff;
   --brand-primary-hover: #89bbff;
   --brand-accent: #f0943a;
@@ -280,6 +306,9 @@ html.dark {
   --color-success-text: #66bb6a;
   --color-error-bg: #3d1b1b;
   --color-error-text: #ef5350;
+  --color-warning-bg: #3d3520;
+  --color-warning-text: #ffd54f;
+  --color-warning-border: #a68307;
   --code-bg: #2a2a2a;
   --code-text: #f06292;
   --pre-bg: #0d1117;
@@ -289,7 +318,7 @@ html.dark {
 html.dark .note-editor { background: var(--bg-surface); }
 html.dark .note-editable { background: var(--bg-surface); color: var(--text-primary); }
 html.dark .note-toolbar { background: var(--bg-toolbar); border-color: var(--border-color); }
-html.dark .note-btn { color: var(--text-secondary); background: transparent; border-color: var(--border-color); }
+html.dark .note-btn-group > .note-btn { color: var(--text-secondary); background-color: var(--bg-body); border-color: var(--border-color); }
 html.dark .ui-dialog { background: var(--bg-surface); color: var(--text-primary); }
 
 /* ── Responsive ── */
@@ -320,3 +349,192 @@ html.dark .ui-dialog { background: var(--bg-surface); color: var(--text-primary)
   .app-content { width: 100% !important; overflow: visible !important; }
   #content_pane { padding: 0; max-width: 100%; }
 }
+
+/* ── Flash Messages ── */
+.flash-container { padding: 0; }
+.flash-container .alert {
+  margin: 0; border-radius: 0;
+  padding: 0.75rem 1.5rem; font-size: 0.9rem;
+}
+
+/* ── Dark Mode: toolbar border + action icons ── */
+html.dark .border-bottom { border-color: var(--border-color) !important; }
+html.dark .border { border-color: var(--border-color) !important; }
+html.dark #content_actions { background: var(--bg-toolbar) !important; }
+
+/* ── Summernote toolbar: allow wrapping, dropdowns visible ── */
+.note-editor .note-toolbar { display: flex; flex-wrap: wrap; overflow: visible; }
+.note-editor .note-toolbar .note-btn-group { flex-shrink: 0; position: relative; }
+.note-editor .note-toolbar .note-btn-group .dropdown-menu { z-index: 1050; }
+
+/* ── Edit form spacing (replaces <br> between labels/fields) ── */
+#content_wrapper_edit > span { margin-top: 0.75rem; }
+#content_wrapper_edit .form-control { margin-bottom: 0.25rem; }
+
+/* ── Login/form pages: center vertically, don't stretch ── */
+.app-content:has(.form-page) { display: flex; align-items: flex-start; justify-content: center; }
+.form-page { align-self: flex-start; width: 100%; }
+
+/* ── Dark Mode: Bootstrap tables ── */
+html.dark .table { color: var(--text-primary); border-color: var(--border-color); }
+html.dark .table-striped > tbody > tr:nth-of-type(odd) > * { color: var(--text-primary); --bs-table-bg-type: var(--bg-body); }
+html.dark .table-striped > tbody > tr:nth-of-type(even) > * { color: var(--text-primary); }
+html.dark .table > thead { background: var(--bg-toolbar); color: var(--text-secondary); }
+html.dark .table > thead th { border-color: var(--border-color); }
+html.dark .table > tbody > tr > td { border-color: var(--border-color); }
+
+/* ── Dark Mode: muted text visibility ── */
+html.dark .text-muted { color: var(--text-secondary) !important; }
+
+/* ── Header action buttons (always visible) ── */
+.header-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; padding: 0.3rem 0.5rem;
+  color: var(--text-primary); cursor: pointer; border-radius: var(--radius-sm);
+}
+.header-btn:hover { background: var(--bg-hover); }
+
+html.dark .ui-dialog-titlebar { background: var(--bg-toolbar); color: var(--text-primary); border-color: var(--border-color); }
+html.dark .ui-dialog-content { background: var(--bg-surface); color: var(--text-primary); }
+html.dark .ui-widget-overlay { background: rgba(0,0,0,0.7); }
+
+
+
+html.dark .note-toolbar .dropdown-menu { background: var(--bg-surface); border-color: var(--border-color); }
+html.dark .note-toolbar .dropdown-menu .dropdown-item { color: var(--text-primary); }
+html.dark .note-toolbar .dropdown-menu .dropdown-item:hover { background: var(--bg-hover); }
+html.dark .note-toolbar .note-btn:hover,
+html.dark .note-toolbar .note-btn.active { background: var(--bg-hover); color: var(--text-primary); }
+html.dark .note-toolbar .note-current-color-button .note-recent-color { border-color: var(--border-color); }
+
+/* Color palette */
+
+/* Statusbar */
+html.dark .note-statusbar { background: var(--bg-toolbar); border-color: var(--border-color); }
+html.dark .note-statusbar .note-resizebar { border-top-color: var(--border-color); }
+
+/* ── Summernote: hide unwanted dropdown carets ── */
+
+.note-toolbar .dropdown-toggle::after { display: none; }
+
+/* ── Dark Mode: Bootstrap variable overrides ── */
+html.dark {
+  --bs-body-bg: transparent;
+  --bs-body-color: var(--text-primary);
+  --bs-table-color: var(--text-primary);
+  --bs-table-bg: transparent;
+  --bs-table-striped-color: var(--text-primary);
+  --bs-table-hover-color: var(--text-primary);
+  --bs-table-border-color: var(--border-color);
+}
+html.dark input, html.dark textarea, html.dark select {
+  color: var(--text-primary); background-color: var(--bg-body); border-color: var(--border-color);
+}
+html.dark input::placeholder, html.dark textarea::placeholder {
+  color: var(--text-muted); opacity: 1;
+}
+html.dark .form-control { color: var(--text-primary); background-color: var(--bg-body); border-color: var(--border-color); }
+html.dark .form-control::placeholder { color: var(--text-muted); }
+html.dark .form-select { color: var(--text-primary); background-color: var(--bg-body); border-color: var(--border-color); }
+
+
+/* ══════════════════════════════════════════════════════
+   Dark Mode: Summernote-lite (comprehensive overrides)
+   ══════════════════════════════════════════════════════ */
+html.dark .note-toolbar { background: var(--bg-toolbar) !important; border-color: var(--border-color) !important; }
+html.dark .note-btn-group > .note-btn { color: var(--text-secondary) !important; background-color: var(--bg-body) !important; border-color: var(--border-color) !important; }
+html.dark .note-btn-group > .note-btn:hover, html.dark .note-btn-group > .note-btn:focus, html.dark .note-btn-group > .note-btn.active { color: var(--text-primary) !important; background-color: var(--bg-hover) !important; }
+html.dark .note-dropdown-menu { background: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+html.dark .note-dropdown-item { color: var(--text-primary) !important; }
+html.dark .note-dropdown-item:hover { background-color: var(--bg-hover) !important; }
+html.dark a.note-dropdown-item, html.dark a.note-dropdown-item:hover { color: var(--text-primary) !important; }
+html.dark .note-modal-content { background: var(--bg-surface) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+html.dark .note-modal-header { background: var(--bg-toolbar) !important; border-color: var(--border-color) !important; }
+html.dark .note-modal-title { color: var(--text-primary) !important; }
+html.dark .note-modal-body { background: var(--bg-surface) !important; color: var(--text-primary) !important; }
+html.dark .note-modal-body label, html.dark .note-modal-body .note-form-label { color: var(--text-primary) !important; }
+html.dark .note-modal-footer { background: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+html.dark .note-modal-footer a { color: var(--text-link) !important; }
+html.dark .note-input { background: var(--bg-body) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+html.dark .note-input::placeholder { color: var(--text-muted) !important; }
+html.dark .note-modal .close { color: var(--text-primary) !important; }
+html.dark .note-modal .note-btn { color: var(--text-primary) !important; }
+html.dark .note-modal .note-btn-primary { color: #fff !important; }
+html.dark .note-modal .note-nav-tabs { border-color: var(--border-color) !important; }
+html.dark .note-modal .note-nav-link { color: var(--text-link) !important; }
+html.dark .note-modal .note-nav-tabs .note-nav-item.show .note-nav-link { background-color: var(--bg-surface) !important; color: var(--text-primary) !important; border-color: var(--border-color) var(--border-color) var(--bg-surface) !important; }
+html.dark .note-modal-backdrop { background: #000 !important; }
+html.dark .note-popover { background: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+html.dark .note-popover .popover-content, html.dark .note-popover-content { background: var(--bg-surface) !important; color: var(--text-primary) !important; }
+html.dark .note-popover .popover-content .note-btn { color: var(--text-primary) !important; background: transparent !important; }
+html.dark .note-popover .popover-content .note-btn:hover { background: var(--bg-hover) !important; }
+html.dark .note-popover .note-popover-arrow::after { border-bottom-color: var(--bg-surface) !important; }
+html.dark .note-color .note-dropdown-menu .note-palette { background: var(--bg-surface); }
+html.dark .note-color .note-dropdown-menu .note-palette .note-palette-title { color: var(--text-secondary) !important; border-color: var(--border-color) !important; }
+html.dark .note-color .note-dropdown-menu .note-palette .note-color-reset,
+html.dark .note-color .note-dropdown-menu .note-palette .note-color-select { color: var(--text-primary) !important; }
+html.dark .note-color .note-dropdown-menu .note-palette .note-color-reset:hover,
+html.dark .note-color .note-dropdown-menu .note-palette .note-color-select:hover { background: var(--bg-hover) !important; }
+html.dark .note-editor { background: var(--bg-surface) !important; }
+html.dark .note-editable { background: var(--bg-surface) !important; color: var(--text-primary) !important; }
+html.dark .note-editor.note-frame, html.dark .note-editor.note-airframe { border-color: var(--border-color) !important; }
+html.dark .note-editor .note-statusbar { background: var(--bg-toolbar) !important; border-color: var(--border-color) !important; }
+html.dark .note-editor .note-statusbar .note-resizebar .note-icon-bar { border-color: var(--border-color) !important; }
+html.dark .note-style .dropdown-style h1, html.dark .note-style .dropdown-style h2,
+html.dark .note-style .dropdown-style h3, html.dark .note-style .dropdown-style h4,
+html.dark .note-style .dropdown-style h5, html.dark .note-style .dropdown-style h6,
+html.dark .note-style .dropdown-style p, html.dark .note-style .dropdown-style blockquote,
+html.dark .note-style .dropdown-style pre { color: var(--text-primary) !important; }
+
+/* Bootstrap modal fallback (if used by Summernote) */
+html.dark .note-modal .modal-dialog .modal-content { background: var(--bg-surface) !important; color: var(--text-primary) !important; }
+html.dark .note-modal .modal-dialog .modal-body { background: var(--bg-surface) !important; }
+html.dark .note-modal .modal-dialog .modal-header { background: var(--bg-toolbar) !important; border-color: var(--border-color) !important; }
+html.dark .note-modal .modal-dialog .modal-footer { background: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+
+/* jQuery UI dialog */
+html.dark .ui-dialog { background: var(--bg-surface); color: var(--text-primary); }
+html.dark .ui-dialog-titlebar { background: var(--bg-toolbar); color: var(--text-primary); border-color: var(--border-color); }
+html.dark .ui-dialog-content { background: var(--bg-surface); color: var(--text-primary); }
+
+/* Summernote: hide unwanted dropdown carets */
+
+
+/* ── Dark Mode: Tooltips ── */
+html.dark .tooltip-inner { background-color: var(--bg-toolbar); color: var(--text-primary); }
+html.dark .tooltip .arrow::before { border-top-color: var(--bg-toolbar); border-bottom-color: var(--bg-toolbar); }
+html.dark .note-tooltip-content { background-color: var(--bg-toolbar); color: var(--text-primary); }
+
+/* ── Dark Mode: file input button ── */
+html.dark input[type="file"]::file-selector-button {
+  background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-color);
+}
+
+/* ── File Manager: drag & drop feedback ── */
+[draggable=true] { cursor: grab; }
+[draggable=true]:active { cursor: grabbing; }
+.drop-target.dragover { background: var(--brand-accent-light) !important; outline: 2px dashed var(--brand-primary); outline-offset: -2px; }
+
+/* ── Edit form: uniform label spacing ── */
+#content_wrapper_edit > span,
+#content_wrapper_edit > label { display: block; margin-top: 0.5rem; margin-bottom: 0.15rem; font-weight: 600; font-size: 0.85rem; }
+#content_wrapper_edit > .form-control,
+#content_wrapper_edit > select,
+#content_wrapper_edit > input { margin-bottom: 0.25rem; }
+.drop-zone-empty:hover { border-color: var(--brand-primary); color: var(--text-secondary); }
+
+/* Hide Summernote native file upload in image dialog — use File Manager browse instead */
+.note-group-select-from-files { display: none !important; }
+
+/* Summernote dropdown menu: hidden by default, inline-flex when parent is open */
+.note-dropdown-menu { display: none !important; }
+.note-btn-group.open .note-dropdown-menu { display: inline-flex !important; }
+.note-btn-group.open .note-dropdown-menu.note-check { flex-direction: column; }
+
+/* Summernote color palette: fix unreadable btn-light text in dark mode */
+.note-palette .btn-light,
+.note-palette .note-color-reset,
+.note-palette .note-color-select { color: var(--text-primary) !important; background: var(--bg-surface) !important; border-color: var(--border-color) !important; }
+
+/* Inline comment marks in editor — styled via CSS, no inline styles */
+mark[data-comment-id] { cursor: help; }

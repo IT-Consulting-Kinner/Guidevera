@@ -86,7 +86,21 @@ class PagesTable extends Table
      */
     public function findChildrenOf(int $parentId): \Cake\ORM\Query\SelectQuery
     {
-        return $this->find()->where(['parent_id' => $parentId]);
+        return $this->find()->where([
+            'parent_id' => $parentId,
+            'deleted_at IS' => null,
+        ]);
+    }
+
+    /**
+     * Automatically exclude soft-deleted records from all queries.
+     * Pass 'withDeleted' => true in finder options to include deleted records.
+     */
+    public function beforeFind(\Cake\Event\EventInterface $event, \Cake\ORM\Query\SelectQuery $query, \ArrayObject $options): void
+    {
+        if (empty($options['withDeleted'])) {
+            $query->where([$this->getAlias() . '.deleted_at IS' => null]);
+        }
     }
 
     public function validationDefault(Validator $validator): Validator
@@ -94,7 +108,7 @@ class PagesTable extends Table
         $validator
             ->scalar('title')
             ->maxLength('title', 255)
-            ->allowEmptyString('title');
+            ->notEmptyString('title', 'Title cannot be empty.', 'update');
 
         $validator
             ->scalar('description')
@@ -113,10 +127,46 @@ class PagesTable extends Table
             ->integer('position')
             ->allowEmptyString('position');
 
+        $validator
+            ->scalar('workflow_status')
+            ->inList('workflow_status', ['draft', 'review', 'published', 'archived'])
+            ->allowEmptyString('workflow_status');
+
+        $validator
+            ->dateTime('publish_at')
+            ->allowEmptyDateTime('publish_at');
+
+        $validator
+            ->dateTime('expire_at')
+            ->allowEmptyDateTime('expire_at');
+
+        $validator
+            ->dateTime('review_due_at')
+            ->allowEmptyDateTime('review_due_at');
+
+        $validator
+            ->boolean('requires_ack')
+            ->allowEmptyString('requires_ack');
+
+        $validator
+            ->scalar('locale')
+            ->maxLength('locale', 10)
+            ->add('locale', 'validLocale', [
+                'rule' => function ($value) {
+                    return (bool)preg_match('/^[a-z]{2}(_[A-Z]{2})?$/', (string)$value);
+                },
+                'message' => 'Locale must be a valid format (e.g. en, de, en_US).',
+            ])
+            ->allowEmptyString('locale');
+
         return $validator;
     }
-}
 
-// Note: In PagesTable, add soft-delete awareness
-// PagesController queries should add ->where(['deleted_at IS' => null])
-// which is already done in the new v9 code.
+    public function buildRules(\Cake\ORM\RulesChecker $rules): \Cake\ORM\RulesChecker
+    {
+        $rules->add($rules->existsIn('parent_id', 'ParentPages'), ['errorField' => 'parent_id']);
+        $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
+        $rules->add($rules->existsIn('modified_by', 'ModifiedByUsers'), ['errorField' => 'modified_by']);
+        return $rules;
+    }
+}

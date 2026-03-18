@@ -14,6 +14,7 @@ class CommentsController extends AppController
 {
     public function index(): ?\Cake\Http\Response
     {
+        $this->request->allowMethod(['post']);
         $this->autoRender = false;
         if (!(Configure::read('Manual.enableComments') ?? false)) {
             return $this->jsonError('feature_disabled');
@@ -34,7 +35,7 @@ class CommentsController extends AppController
         foreach ($comments as $c) {
             $list[] = [
                 'id' => $c->id, 'comment' => $c->comment,
-                'user' => $c->user->fullname ?? '', 'userId' => $c->user_id,
+                'user' => $c->user?->fullname ?? '', 'userId' => $c->user_id,
                 'created' => $c->created->format('d.m.Y H:i'),
             ];
         }
@@ -61,9 +62,10 @@ class CommentsController extends AppController
         $user = $this->currentUser();
         $tbl = $this->fetchTable('PageComments');
         $entity = $tbl->newEntity([
-            'page_id' => $pageId, 'user_id' => $user['id'] ?? 0,
+            'page_id' => $pageId,
             'comment' => mb_substr($comment, 0, 5000),
-        ]);
+        ], ['fields' => ['page_id', 'comment']]);
+        $entity->set('user_id', $user['id'] ?? 0);
 
         if ($tbl->save($entity)) {
             $this->audit('comment_add', 'page', $pageId, mb_substr($comment, 0, 200));
@@ -88,6 +90,9 @@ class CommentsController extends AppController
         $this->autoRender = false;
         if (!(Configure::read('Manual.enableComments') ?? false)) {
             return $this->jsonError('feature_disabled');
+        }
+        if (!$this->isLoggedIn()) {
+            return $this->jsonError('not_authenticated');
         }
         $id = (int)$this->request->getData('id', 0);
         if (!$id) {
@@ -126,16 +131,19 @@ class CommentsController extends AppController
             ->all();
 
         $page = $this->fetchTable('Pages')->find()->select(['title'])->where(['id' => $pageId])->first();
-        $pageTitle = $page->title ?? "Page #{$pageId}";
+        $pageTitle = $page?->title ?? "Page #{$pageId}";
 
         foreach ($users as $u) {
             if ($u->id === ($author['id'] ?? 0)) {
                 continue; // Don't notify self
             }
-            $this->sendNotification(
-                "Mention on '{$pageTitle}'",
-                ($author['fullname'] ?? 'Someone') . " mentioned you in a comment on '{$pageTitle}':\n\n{$text}"
-            );
+            if (!empty($u->email)) {
+                $this->sendUserNotification(
+                    $u->email,
+                    "Mention on '{$pageTitle}'",
+                    ($author['fullname'] ?? 'Someone') . " mentioned you in a comment on '{$pageTitle}':\n\n{$text}"
+                );
+            }
         }
     }
 }

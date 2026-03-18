@@ -27,6 +27,17 @@ class MediaController extends AppController
         $pages = $this->fetchTable('Pages')->find()->select(['id', 'title',
             'content'])->where(['deleted_at IS' => null])->all();
 
+        // Build filename→ID lookup from media_files table for correct download URLs
+        $mediaFiles = $this->fetchTable('MediaFiles')->find()
+            ->select(['id', 'filename', 'original_name'])->all();
+        $fileIdMap = [];
+        foreach ($mediaFiles as $mf) {
+            $fileIdMap[$mf->filename] = [
+                'id' => $mf->id,
+                'original_name' => $mf->original_name,
+            ];
+        }
+
         $files = [];
         foreach (scandir($mediaDir) as $file) {
             if ($file[0] === '.' || is_dir($mediaDir . $file)) {
@@ -45,6 +56,15 @@ class MediaController extends AppController
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
             $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
 
+            // Use ID-based URL if file is registered; null for unregistered files
+            if (isset($fileIdMap[$file])) {
+                $url = '/downloads/' . $fileIdMap[$file]['id']
+                    . '/' . rawurlencode($fileIdMap[$file]['original_name']);
+            } else {
+                // File exists on disk but not in media_files — no valid download URL
+                $url = null;
+            }
+
             $files[] = [
                 'name' => $file,
                 'size' => filesize($path),
@@ -54,7 +74,7 @@ class MediaController extends AppController
                 'uploaded' => date('d.m.Y H:i', filemtime($path)),
                 'usedIn' => $usedIn,
                 'usageCount' => count($usedIn),
-                'url' => '/downloads/' . $file,
+                'url' => $url,
             ];
         }
 
@@ -90,6 +110,26 @@ class MediaController extends AppController
         $oldPath = $mediaDir . basename($oldName);
         if (!file_exists($oldPath)) {
             return $this->jsonError('file_not_found');
+        }
+
+        // Prevent file type swapping (e.g. replacing image.png with malicious.php)
+        $oldExt = strtolower(pathinfo($oldName, PATHINFO_EXTENSION));
+        $newExt = strtolower(pathinfo($file->getClientFilename(), PATHINFO_EXTENSION));
+        if ($oldExt !== $newExt) {
+            return $this->jsonError('file_type_mismatch');
+        }
+
+        // Verify MIME type matches original
+        $oldMime = (new \finfo(FILEINFO_MIME_TYPE))->file($oldPath);
+        $tmpPath = $file->getStream()->getMetadata('uri');
+        $newMime = ($tmpPath && file_exists($tmpPath))
+            ? (new \finfo(FILEINFO_MIME_TYPE))->file($tmpPath)
+            : $file->getClientMediaType();
+        // Allow within same MIME category (e.g. image/png → image/jpeg)
+        $oldCategory = explode('/', $oldMime)[0] ?? '';
+        $newCategory = explode('/', $newMime)[0] ?? '';
+        if ($oldCategory !== $newCategory) {
+            return $this->jsonError('file_type_mismatch');
         }
 
         // Replace file, keep same name → all links stay intact

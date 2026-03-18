@@ -26,9 +26,15 @@ class PageFeedbackTable extends Table
 
     public function validationDefault(Validator $validator): Validator
     {
-        $validator->integer('rating')->inList('rating', [-1, 0, 1]);
+        $validator->integer('rating')->requirePresence('rating', 'create');
         $validator->scalar('comment')->maxLength('comment', 2000)->allowEmptyString('comment');
         $validator->inList('status', ['pending', 'approved', 'rejected']);
         return $validator;
+    }
+
+    public function buildRules(\Cake\ORM\RulesChecker $rules): \Cake\ORM\RulesChecker
+    {
+        $rules->add($rules->existsIn('page_id', 'Pages'));
+        return $rules;
     }
 }

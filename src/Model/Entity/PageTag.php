@@ -8,5 +8,8 @@ use Cake\ORM\Entity;
 
 class PageTag extends Entity
 {
-    protected array $_accessible = ['*' => true];
+    protected array $_accessible = [
+        'page_id' => true,
+        'tag' => true,
+    ];
 }

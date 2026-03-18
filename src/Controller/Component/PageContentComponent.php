@@ -33,11 +33,11 @@ class PageContentComponent extends Component
         }
 
         // Build title lookup for chapter-numbered display
-        $numbered = PagesService::calculateChapterNumbering(
-            $Pages->find()->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all()->toArray(),
-            $this->getShowNumbering()
-        );
+        $allPagesOrdered = $Pages->find()->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all()->toArray();
+        $numbered = PagesService::calculateChapterNumbering($allPagesOrdered, $this->getShowNumbering());
         $lookup = PagesService::buildTitleLookup($numbered);
+        $hideRoot = PagesService::shouldHideRoot();
+        $rootId = $hideRoot ? PagesService::getRootPageId($allPagesOrdered) : 0;
 
         // Try FULLTEXT search first
         $ftQuery = '+' . implode('* +', $words) . '*';
@@ -54,9 +54,13 @@ class PageContentComponent extends Component
             $this->applySearchFilters($query, $filters);
             $results = [];
             foreach ($query->all() as $p) {
-                $results[] = ['id' => $p->id, 'title' => $lookup[$p->id] ?? $p->title ?: '(untitled)', '
-                    status' => $p->status, 'snippet' =>
-                        $this->extractSnippet($p->content ?? $p->description ?? '', $words)];
+                if ($rootId && $p->id == $rootId) continue;
+                $results[] = [
+                    'id' => $p->id,
+                    'title' => $lookup[$p->id] ?? $p->title ?: '(untitled)',
+                    'status' => $p->status,
+                    'snippet' => $this->extractSnippet($p->content ?? $p->description ?? '', $words),
+                ];
             }
             if (!empty($results)) {
                 return ['results' => $results, 'search' => $search, 'searchMode' => 'fulltext'];
@@ -78,9 +82,13 @@ class PageContentComponent extends Component
 
         $results = [];
         foreach ($query->all() as $p) {
-            $results[] = ['id' => $p->id, 'title' => $lookup[$p->id] ?? $p->title ?: '(untitled)', '
-                status' => $p->status, 'snippet' =>
-                    $this->extractSnippet($p->content ?? $p->description ?? '', $words)];
+            if ($rootId && $p->id == $rootId) continue;
+            $results[] = [
+                'id' => $p->id,
+                'title' => $lookup[$p->id] ?? $p->title ?: '(untitled)',
+                'status' => $p->status,
+                'snippet' => $this->extractSnippet($p->content ?? $p->description ?? '', $words),
+            ];
         }
         return ['results' => $results, 'search' => $search, 'searchMode' => 'like'];
     }
@@ -136,8 +144,15 @@ class PageContentComponent extends Component
             $snippet .= '...';
         }
 
+        // HTML-escape the snippet BEFORE adding <mark> tags to prevent XSS
+        $snippet = htmlspecialchars($snippet, ENT_QUOTES, 'UTF-8');
         foreach ($words as $w) {
-            $snippet = preg_replace('/(' . preg_quote($w, '/') . ')/iu', '<mark>$1</mark>', $snippet);
+            $escaped = htmlspecialchars($w, ENT_QUOTES, 'UTF-8');
+            $snippet = preg_replace(
+                '/(' . preg_quote($escaped, '/') . ')/iu',
+                '<mark>$1</mark>',
+                $snippet
+            );
         }
         return $snippet;
     }
@@ -148,6 +163,8 @@ class PageContentComponent extends Component
         $allPages = $Pages->find()->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all()->toArray();
         $numbered = PagesService::calculateChapterNumbering($allPages, $this->getShowNumbering());
         $lookup = PagesService::buildTitleLookup($numbered);
+        $hideRoot = PagesService::shouldHideRoot();
+        $rootId = $hideRoot ? PagesService::getRootPageId($allPages) : 0;
 
         $pagesindex = $this->getController()->fetchTable('Pagesindex');
         $query = $pagesindex->find()->contain(['Pages'])->orderBy(['Pagesindex.keyword' => 'ASC',
@@ -158,6 +175,7 @@ class PageContentComponent extends Component
 
         $indexes = [];
         foreach ($query->all() as $row) {
+            if ($rootId && $row->page_id == $rootId) continue;
             $kw = $row->keyword;
             if (!isset($indexes[$kw])) {
                 $indexes[$kw] = [];
@@ -211,11 +229,17 @@ class PageContentComponent extends Component
         $allPages = $Pages->find()->where(['status' => 'active', 'deleted_at IS' => null])
             ->orderBy(['position' => 'ASC'])->all()->toArray();
         $numbered = PagesService::calculateChapterNumbering($allPages, $this->getShowNumbering());
+        $hideRoot = PagesService::shouldHideRoot();
+        $rootId = $hideRoot ? PagesService::getRootPageId($allPages) : 0;
+        $result = [];
         foreach ($numbered as $p) {
+            $pid = is_object($p) ? $p->id : ($p['id'] ?? 0);
+            if ($rootId && $pid == $rootId) continue;
             if (is_object($p)) {
                 $p->content = PagesService::sanitizeHtml($p->content ?? '');
             }
+            $result[] = $p;
         }
-        return $numbered;
+        return $result;
     }
 }

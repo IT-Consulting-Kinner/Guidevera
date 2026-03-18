@@ -8,5 +8,10 @@ use Cake\ORM\Entity;
 
 class PageReview extends Entity
 {
-    protected array $_accessible = ['*' => true];
+    protected array $_accessible = [
+        'page_id' => true,
+        'status' => false,
+        'comment' => true,
+        // reviewer_id, status, created: set server-side only
+    ];
 }

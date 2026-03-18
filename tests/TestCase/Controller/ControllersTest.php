@@ -19,8 +19,9 @@ class ControllersTest extends TestCase
         parent::setUp();
 
         $connection = \Cake\Datasource\ConnectionManager::get('test');
+        $now = date('Y-m-d H:i:s');
 
-        // Create test user
+        // Create test user (all NOT NULL fields)
         $salt = Security::getSalt();
         $this->assertNotSame('', $salt, 'Security salt must not be empty');
         $hashedPw = password_hash(
@@ -29,38 +30,41 @@ class ControllersTest extends TestCase
         );
         $connection->execute(
             "INSERT IGNORE INTO users
-                (id, gender, username, password, fullname, email,
-                role, change_password, page_tree, status)
+                (id, gender, username, password, fullname, email, role,
+                change_password, page_tree, notify_mentions, preferences, status)
             VALUES
-                (1, 'male', 'admin', ?, 'Test Admin',
-                'admin@test.com', 'admin', 0, '', 'active')",
+                (1, 'male', 'admin', ?, 'Test Admin', 'admin@test.com', 'admin',
+                0, '', 1, '{}', 'active')",
             [$hashedPw]
         );
 
-        // Create test pages (current schema: no lft/rght)
+        // Create test pages (datetime NOT NULL — no DEFAULT)
         $connection->execute(
             "INSERT IGNORE INTO pages
-                (id, parent_id, position, title, content,
-                status, workflow_status, views, created_by, modified_by)
+                (id, parent_id, position, title, content, status, workflow_status,
+                views, created_by, modified_by, locale, created, modified)
             VALUES
-                (1, NULL, 0, 'Manual', '<p>Root page</p>',
-                'active', 'published', 5, 1, 1)"
+                (1, NULL, 0, 'Manual', '<p>Root page</p>', 'active', 'published',
+                5, 1, 1, 'en', ?, ?)",
+            [$now, $now]
         );
         $connection->execute(
             "INSERT IGNORE INTO pages
-                (id, parent_id, position, title, content,
-                status, workflow_status, views, created_by, modified_by)
+                (id, parent_id, position, title, content, status, workflow_status,
+                views, created_by, modified_by, locale, created, modified)
             VALUES
-                (2, 1, 1, 'Chapter 1', '<p>First chapter</p>',
-                'active', 'published', 3, 1, 1)"
+                (2, 1, 1, 'Chapter 1', '<p>First chapter</p>', 'active', 'published',
+                3, 1, 1, 'en', ?, ?)",
+            [$now, $now]
         );
         $connection->execute(
             "INSERT IGNORE INTO pages
-                (id, parent_id, position, title, content,
-                status, workflow_status, views, created_by, modified_by)
+                (id, parent_id, position, title, content, status, workflow_status,
+                views, created_by, modified_by, locale, created, modified)
             VALUES
-                (3, 1, 2, 'Chapter 2', '<p>Second chapter</p>',
-                'inactive', 'draft', 0, 1, 1)"
+                (3, 1, 2, 'Chapter 2', '<p>Second chapter</p>', 'inactive', 'draft',
+                0, 1, 1, 'en', ?, ?)",
+            [$now, $now]
         );
 
         // Keywords
@@ -108,10 +112,7 @@ class ControllersTest extends TestCase
         $this->post('/pages/get_tree');
         $this->assertResponseOk();
 
-        $body = json_decode(
-            (string)$this->_response->getBody(),
-            true
-        );
+        $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('arrTree', $body);
         $this->assertNotEmpty($body['arrTree']);
     }
@@ -121,10 +122,7 @@ class ControllersTest extends TestCase
         $this->post('/pages/show', ['id' => 1]);
         $this->assertResponseOk();
 
-        $body = json_decode(
-            (string)$this->_response->getBody(),
-            true
-        );
+        $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertEquals('Manual', $body['title'] ?? '');
     }
 
@@ -133,10 +131,7 @@ class ControllersTest extends TestCase
         $this->post('/pages/show', ['id' => 99999]);
         $this->assertResponseOk();
 
-        $body = json_decode(
-            (string)$this->_response->getBody(),
-            true
-        );
+        $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('error', $body);
     }
 
@@ -144,47 +139,25 @@ class ControllersTest extends TestCase
     {
         $this->post('/pages/create');
         $code = $this->_response->getStatusCode();
-        // May return JSON error (200) or redirect to login (302)
-        $this->assertTrue(
-            $code === 200 || $code === 302,
-            "Expected 200 or 302, got {$code}"
-        );
-        if ($code === 200) {
-            $body = json_decode(
-                (string)$this->_response->getBody(),
-                true
-            );
-            $this->assertArrayHasKey('error', $body);
-        }
+        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
     }
 
     public function testPagesCreateWithAuth(): void
     {
         $this->session([
-            'Auth' => [
-                'id' => 1,
-                'role' => 'contributor',
-                'fullname' => 'Test',
-            ],
+            'Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test'],
         ]);
         $this->post('/pages/create');
         $this->assertResponseOk();
 
-        $body = json_decode(
-            (string)$this->_response->getBody(),
-            true
-        );
+        $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('intId', $body);
     }
 
     public function testPagesSaveWithAuth(): void
     {
         $this->session([
-            'Auth' => [
-                'id' => 1,
-                'role' => 'editor',
-                'fullname' => 'Test',
-            ],
+            'Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test'],
         ]);
         $this->post('/pages/save', [
             'id' => 1,
@@ -195,24 +168,14 @@ class ControllersTest extends TestCase
         ]);
         $this->assertResponseOk();
 
-        $body = json_decode(
-            (string)$this->_response->getBody(),
-            true
-        );
-        $this->assertEquals(
-            1,
-            $body['intAffectedRows'] ?? 0
-        );
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals(1, $body['intAffectedRows'] ?? 0);
     }
 
     public function testPagesSetStatus(): void
     {
         $this->session([
-            'Auth' => [
-                'id' => 1,
-                'role' => 'contributor',
-                'fullname' => 'Test',
-            ],
+            'Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test'],
         ]);
         $this->post('/pages/set_status', [
             'id' => 3,
@@ -226,43 +189,30 @@ class ControllersTest extends TestCase
         $this->post('/pages/search', ['search' => 'Root']);
         $this->assertResponseOk();
 
-        $body = json_decode(
-            (string)$this->_response->getBody(),
-            true
-        );
+        $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('results', $body);
     }
 
     public function testPagesDeleteLeaf(): void
     {
         $this->session([
-            'Auth' => [
-                'id' => 1,
-                'role' => 'contributor',
-                'fullname' => 'Test',
-            ],
+            'Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test'],
         ]);
         $this->post('/pages/delete', ['id' => 3]);
         $this->assertResponseOk();
     }
 
-    public function testPagesDeleteParentFails(): void
+    public function testPagesDeleteParentCascades(): void
     {
         $this->session([
-            'Auth' => [
-                'id' => 1,
-                'role' => 'contributor',
-                'fullname' => 'Test',
-            ],
+            'Auth' => ['id' => 1, 'role' => 'contributor', 'fullname' => 'Test'],
         ]);
         $this->post('/pages/delete', ['id' => 1]);
         $this->assertResponseOk();
 
-        $body = json_decode(
-            (string)$this->_response->getBody(),
-            true
-        );
-        $this->assertArrayHasKey('error', $body);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        // Cascade delete now succeeds — parent + children are soft-deleted
+        $this->assertEquals(1, $body['intAffectedRows'] ?? 0);
     }
 
     // ── Users Controller ──
@@ -288,14 +238,17 @@ class ControllersTest extends TestCase
             'username' => 'admin',
             'password' => 'wrongpassword',
         ]);
-        $this->assertResponseOk();
+        $code = $this->_response->getStatusCode();
+        $this->assertEquals(200, $code, "Expected login form re-display (200), got {$code}");
+        $this->assertNull(
+            $this->_requestSession->read('Auth.id'),
+            'User should not be authenticated after failed login'
+        );
     }
 
     public function testLogout(): void
     {
-        $this->session([
-            'Auth' => ['id' => 1, 'role' => 'admin'],
-        ]);
+        $this->session(['Auth' => ['id' => 1, 'role' => 'admin']]);
         $this->get('/user/logout');
         $this->assertRedirect('/');
     }
@@ -303,11 +256,7 @@ class ControllersTest extends TestCase
     public function testSavePageTree(): void
     {
         $this->session([
-            'Auth' => [
-                'id' => 1,
-                'role' => 'admin',
-                'fullname' => 'Test',
-            ],
+            'Auth' => ['id' => 1, 'role' => 'admin', 'fullname' => 'Test'],
         ]);
         $tree = json_encode([
             ['id' => 1, 'children' => [
@@ -315,9 +264,7 @@ class ControllersTest extends TestCase
                 ['id' => 3, 'children' => []],
             ]],
         ]);
-        $this->post('/user/save_page_tree', [
-            'tree' => $tree,
-        ]);
+        $this->post('/user/save_page_tree', ['tree' => $tree]);
         $this->assertResponseOk();
     }
 
@@ -344,10 +291,7 @@ class ControllersTest extends TestCase
             ['id' => 3, 'parent_id' => 1, 'title' => 'Ch2', 'status' => 'active'],
         ];
 
-        $nav = \App\Service\PagesService::calculateNavigation(
-            2,
-            $pages
-        );
+        $nav = \App\Service\PagesService::calculateNavigation(2, $pages);
         $this->assertEquals(3, $nav['nextId']);
         $this->assertEquals(1, $nav['previousId']);
     }

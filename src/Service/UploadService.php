@@ -21,6 +21,7 @@ class UploadService
     private const BLOCKED_EXTENSIONS = [
         'php', 'phtml', 'phar', 'sh', 'bash', 'exe', 'bat', 'cmd',
         'cgi', 'pl', 'py', 'rb', 'jsp', 'asp', 'aspx',
+        'svg', 'html', 'htm', 'shtml', 'xhtml',
     ];
 
     /** MIME types indicating executable content — always blocked. */
@@ -48,10 +49,13 @@ class UploadService
             return 'invalid_filename';
         }
 
-        // Block dangerous extensions
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        if (in_array($ext, self::BLOCKED_EXTENSIONS)) {
-            return 'invalid_file_type';
+        // Block dangerous extensions (check ALL extensions to prevent double-extension attacks)
+        $parts = explode('.', $filename);
+        array_shift($parts); // remove the base name
+        foreach ($parts as $part) {
+            if (in_array(strtolower($part), self::BLOCKED_EXTENSIONS)) {
+                return 'invalid_file_type';
+            }
         }
 
         // Size limit from config
@@ -66,13 +70,16 @@ class UploadService
             if ($tmpPath && file_exists($tmpPath)) {
                 $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($tmpPath);
             } else {
-                $mime = $file->getClientMediaType() ?? 'application/octet-stream';
+                // Cannot determine real MIME type — reject for safety
+                Log::warning('MIME check: temp file not accessible, rejecting upload');
+                return 'upload_failed';
             }
             if (in_array($mime, self::BLOCKED_MIMES)) {
                 return 'invalid_file_type';
             }
         } catch (\Exception $e) {
             Log::warning('MIME check failed: ' . $e->getMessage());
+            return 'upload_failed';
         }
 
         return null;
@@ -85,7 +92,7 @@ class UploadService
     public static function timestampedName(string $filename): string
     {
         $safe = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $filename);
-        return date('Ymd_His') . '_' . $safe;
+        return date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . $safe;
     }
 
     /**

@@ -13,6 +13,6 @@ class PageFeedback extends Entity
 {
     protected array $_accessible = [
         'page_id' => true, 'rating' => true, 'comment' => true,
-        'client_ip' => true, 'status' => true,
+        'client_ip' => false, 'status' => false,
     ];
 }

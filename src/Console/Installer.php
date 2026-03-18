@@ -140,15 +140,15 @@ class Installer
             }
         }
 
-        // Change the permissions on a path and output the results.
+        // Change the permissions on a path (group-writable, not world-writable).
         $changePerms = function (string $path) use ($io): void {
             $currentPerms = fileperms($path) & 0777;
-            $worldWritable = $currentPerms | 0007;
-            if ($worldWritable == $currentPerms) {
+            $groupWritable = $currentPerms | 0070;
+            if ($groupWritable === $currentPerms) {
                 return;
             }
 
-            $res = chmod($path, $worldWritable);
+            $res = chmod($path, $groupWritable);
             if ($res) {
                 $io->write('Permissions set on ' . $path);
             } else {

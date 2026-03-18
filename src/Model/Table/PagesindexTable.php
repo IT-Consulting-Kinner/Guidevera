@@ -38,6 +38,7 @@ class PagesindexTable extends Table
     {
         $validator
             ->scalar('keyword')
+            ->maxLength('keyword', 255)
             ->notEmptyString('keyword');
 
         $validator
@@ -45,5 +46,11 @@ class PagesindexTable extends Table
             ->requirePresence('page_id', 'create');
 
         return $validator;
+    }
+
+    public function buildRules(\Cake\ORM\RulesChecker $rules): \Cake\ORM\RulesChecker
+    {
+        $rules->add($rules->existsIn('page_id', 'Pages'));
+        return $rules;
     }
 }

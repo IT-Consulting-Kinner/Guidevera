@@ -1,81 +1,131 @@
 /**
- * init.js — Application initialization scripts.
- *
- * Extracted from inline <script> blocks to enable strict CSP with nonces.
- * This file handles: dark mode, font size, cookie consent, service worker,
- * jQuery/Bootstrap conflict resolution, and tooltip initialization.
+ * Guidevera Init — Runs before pages.js.
+ * Handles: dark mode, font size, cookie consent, service worker.
  */
 
-// ── Dark Mode (system preference + manual toggle + localStorage) ──
+// ── Dark Mode (immediate — no flash) ──
+(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})();
+
+// ── Font Size (immediate) ──
+(function(){try{var s=localStorage.getItem('fontSize');if(s){document.documentElement.style.fontSize=s}}catch(e){}})();
 
 function toggleDarkMode() {
     var isDark = document.documentElement.classList.toggle('dark');
-    try { localStorage.setItem('darkMode', isDark ? '1' : '0'); } catch(e) {}
-    jQuery('#darkModeIcon').toggleClass('fa-moon fa-sun');
+    try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
+    var icon = document.getElementById('darkModeIcon');
+    if (icon) { icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon'; }
 }
 
-(function() {
-    try {
-        var stored = localStorage.getItem('darkMode');
-        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        var shouldDark = stored !== null ? stored === '1' : prefersDark;
-        if (shouldDark) {
-            document.documentElement.classList.add('dark');
-            setTimeout(function(){ jQuery('#darkModeIcon').removeClass('fa-moon').addClass('fa-sun'); }, 0);
-        }
-    } catch(e) {}
-    try {
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-            if (localStorage.getItem('darkMode') !== null) return;
-            if (e.matches) { document.documentElement.classList.add('dark'); jQuery('#darkModeIcon').removeClass('fa-moon').addClass('fa-sun'); }
-            else { document.documentElement.classList.remove('dark'); jQuery('#darkModeIcon').removeClass('fa-sun').addClass('fa-moon'); }
-        });
-    } catch(e) {}
-})();
-
-// ── Font Size (75%–150%, persisted in localStorage) ──
-
-var fontSize = parseInt(localStorage.getItem('fontSize') || '100');
-if (fontSize !== 100) document.documentElement.style.fontSize = fontSize + '%';
-
-function changeFontSize(dir) {
-    fontSize = Math.max(75, Math.min(150, fontSize + dir * 10));
-    document.documentElement.style.fontSize = fontSize + '%';
-    try { localStorage.setItem('fontSize', fontSize); } catch(e) {}
+function changeFontSize(delta) {
+    var current = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    var newSize = Math.max(12, Math.min(24, current + delta));
+    document.documentElement.style.fontSize = newSize + 'px';
+    try { localStorage.setItem('fontSize', newSize + 'px'); } catch(e) {}
 }
 
-// ── Cookie Consent (accept → hide, reject → about:blank) ──
+function toggleSidebar() {
+    document.querySelector('.app-sidebar')?.classList.toggle('mobile-open');
+    document.querySelector('.sidebar-backdrop')?.classList.toggle('open');
+}
 
+function closeSidebar() {
+    document.querySelector('.app-sidebar')?.classList.remove('mobile-open');
+    document.querySelector('.sidebar-backdrop')?.classList.remove('open');
+}
+
+function load_module(url, target) {
+    if (target === 'blank') { window.open(url, '_blank'); return; }
+    window.location.href = url;
+}
+
+function add_text_direction(dir) {
+    document.documentElement.setAttribute('dir', dir);
+}
+
+// ── Cookie Consent ──
 (function() {
     var banner = document.getElementById('cookieBanner');
     if (!banner) return;
-    try {
-        var consent = localStorage.getItem('cookieConsent');
-        if (consent === null) banner.style.display = 'block';
-        else if (consent === 'rejected') window.location.href = 'about:blank';
-    } catch(e) { banner.style.display = 'block'; }
+
+    var cookieIcon = document.getElementById('cookieSettingsIcon');
+    var consent;
+    try { consent = localStorage.getItem('cookieConsent'); } catch(e) { consent = null; }
+
+    if (consent === 'accepted') {
+        // Already accepted — show cookie icon, hide banner
+        banner.style.display = 'none';
+        if (cookieIcon) cookieIcon.style.display = 'flex';
+    } else {
+        // Not accepted (null or 'rejected') — show banner, hide icon
+        banner.style.display = 'block';
+        if (cookieIcon) cookieIcon.style.display = 'none';
+    }
 })();
 
 function acceptCookies() {
     try { localStorage.setItem('cookieConsent', 'accepted'); } catch(e) {}
-    document.getElementById('cookieBanner').style.display = 'none';
+    var banner = document.getElementById('cookieBanner');
+    var icon = document.getElementById('cookieSettingsIcon');
+    if (banner) banner.style.display = 'none';
+    if (icon) icon.style.display = 'flex';
 }
 
 function rejectCookies() {
-    try { localStorage.setItem('cookieConsent', 'rejected'); } catch(e) {}
+    try { localStorage.removeItem('cookieConsent'); } catch(e) {}
     window.location.href = 'about:blank';
 }
 
-// ── Service Worker Registration (PWA offline support) ──
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function() {});
+function showCookieBanner() {
+    var banner = document.getElementById('cookieBanner');
+    var icon = document.getElementById('cookieSettingsIcon');
+    if (banner) banner.style.display = 'block';
+    if (icon) icon.style.display = 'none';
 }
 
-// ── jQuery Ready: Bootstrap/jQuery UI conflicts + tooltips ──
+// ── Service Worker ──
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
 
-jQuery(document).ready(function() {
-    if ($.fn.button && $.fn.button.noConflict) { var bb = $.fn.button.noConflict(); $.fn.bootstrapBtn = bb; }
-    if ($.fn.tooltip && $.fn.tooltip.noConflict) { var bt = $.fn.tooltip.noConflict(); $.fn.bsTooltip = bt; }
-    try { jQuery('[title]').not('[title=""]').not('.ui-dialog-titlebar *').tooltip(); } catch(e) {}
-});
+// ── Sidebar Resize ──
+(function() {
+    // Restore saved width from cookie
+    var saved = document.cookie.replace(/(?:(?:^|.*;\s*)sidebarWidth\s*=\s*([^;]*).*$)|^.*$/, '$1');
+    if (saved) {
+        document.documentElement.style.setProperty('--sidebar-width', saved);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var handle = document.getElementById('sidebarResizeHandle');
+        var sidebar = document.getElementById('sidebar');
+        if (!handle || !sidebar) return;
+
+        var startX, startW;
+        handle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            startX = e.clientX;
+            startW = sidebar.offsetWidth;
+            handle.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+
+            function onMove(e) {
+                var w = Math.max(192, Math.min(640, startW + (e.clientX - startX)));
+                sidebar.style.width = w + 'px';
+                document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+            }
+            function onUp() {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                handle.classList.remove('active');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                // Save to cookie (1 year)
+                var w = sidebar.offsetWidth + 'px';
+                document.cookie = 'sidebarWidth=' + w + ';path=/;max-age=31536000;SameSite=Lax';
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    });
+})();
