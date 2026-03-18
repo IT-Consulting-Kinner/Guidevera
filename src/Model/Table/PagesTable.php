@@ -29,7 +29,7 @@ use Cake\Validation\Validator;
  * @package App\Model\Table
  * @method \App\Model\Entity\Page newEmptyEntity()
  * @method \App\Model\Entity\Page get(mixed $primaryKey, array|string $finder = 'all',
-     ...\Cake\ORM\Query\SelectQuery $options)
+ *     ...\Cake\ORM\Query\SelectQuery $options)
  */
 class PagesTable extends Table
 {
@@ -100,8 +100,7 @@ class PagesTable extends Table
         \Cake\Event\EventInterface $event,
         \Cake\ORM\Query\SelectQuery $query,
         \ArrayObject $options
-    ): void
-    {
+    ): void {
         if (empty($options['withDeleted'])) {
             $query->where([$this->getAlias() . '.deleted_at IS' => null]);
         }
@@ -171,6 +170,7 @@ class PagesTable extends Table
         $rules->add($rules->existsIn('parent_id', 'ParentPages'), ['errorField' => 'parent_id']);
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
         $rules->add($rules->existsIn('modified_by', 'ModifiedByUsers'), ['errorField' => 'modified_by']);
+
         return $rules;
     }
 }
