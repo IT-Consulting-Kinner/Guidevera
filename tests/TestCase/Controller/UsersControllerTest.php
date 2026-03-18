@@ -11,13 +11,13 @@ class UsersControllerTest extends TestCase
 {
     use IntegrationTestTrait;
 
+    protected array $fixtures = ['app.Users'];
+
     public function setUp(): void
     {
         parent::setUp();
         $this->enableCsrfToken();
     }
-
-    protected array $fixtures = ['app.Users'];
 
     public function testLoginPageLoads(): void
     {
@@ -37,8 +37,8 @@ class UsersControllerTest extends TestCase
     public function testLoginFailsWithBadCredentials(): void
     {
         $this->post('/user/login', ['username' => 'nobody', 'password' => 'wrong']);
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+        $this->assertResponseContains('You could not be logged in');
     }
 
     public function testLogoutRedirects(): void
@@ -70,8 +70,11 @@ class UsersControllerTest extends TestCase
         $this->configRequest([
             'headers' => ['X-Requested-With' => 'XMLHttpRequest'],
         ]);
+
         $this->post('/user/save_page_tree', ['strElements' => 'open[0]=1']);
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 }

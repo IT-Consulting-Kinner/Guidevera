@@ -11,6 +11,8 @@ class PagesControllerTest extends TestCase
 {
     use IntegrationTestTrait;
 
+    protected array $fixtures = ['app.Pages', 'app.Users', 'app.Pagesindex'];
+
     public function setUp(): void
     {
         parent::setUp();
@@ -20,57 +22,69 @@ class PagesControllerTest extends TestCase
         ]);
     }
 
-    protected array $fixtures = ['app.Pages', 'app.Users', 'app.Pagesindex'];
-
     // ── Auth guard tests ──
 
     public function testEditRequiresAuth(): void
     {
         $this->post('/pages/edit', ['id' => 1]);
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
     public function testCreateRequiresAuth(): void
     {
         $this->post('/pages/create');
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
     public function testSaveRequiresAuth(): void
     {
         $this->post('/pages/save', ['id' => 1, 'title' => 'Test']);
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
     public function testDeleteRequiresAuth(): void
     {
         $this->post('/pages/delete', ['id' => 1]);
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
     public function testSetStatusRequiresAuth(): void
     {
         $this->post('/pages/set_status', ['id' => 1, 'status' => 'active']);
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
     public function testUpdateOrderRequiresAuth(): void
     {
         $this->post('/pages/update_order', ['strPages' => '']);
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
     public function testBrowseRequiresAuth(): void
     {
         $this->post('/pages/browse');
-        $code = $this->_response->getStatusCode();
-        $this->assertEquals(302, $code, "Expected redirect to login, got {$code}");
+        $this->assertResponseOk();
+
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $this->assertEquals('not_authenticated', $body['error'] ?? '');
     }
 
     // ── Show endpoint (public) ──
@@ -79,18 +93,19 @@ class PagesControllerTest extends TestCase
     {
         $this->post('/pages/show', ['id' => 1]);
         $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
-        // Should contain page data fields
-        $this->assertArrayHasKey('id', $body, 'Response should contain page id');
-        $this->assertArrayHasKey('title', $body, 'Response should contain page title');
-        $this->assertArrayHasKey('content', $body, 'Response should contain page content');
-        $this->assertArrayHasKey('status', $body, 'Response should contain page status');
+        $this->assertArrayHasKey('id', $body);
+        $this->assertArrayHasKey('title', $body);
+        $this->assertArrayHasKey('content', $body);
+        $this->assertArrayHasKey('status', $body);
     }
 
     public function testShowInvalidId(): void
     {
         $this->post('/pages/show', ['id' => 0]);
         $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('error', $body);
     }
@@ -99,6 +114,7 @@ class PagesControllerTest extends TestCase
     {
         $this->post('/pages/show', ['id' => 99999]);
         $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('error', $body);
     }
@@ -109,6 +125,7 @@ class PagesControllerTest extends TestCase
     {
         $this->post('/pages/get_tree');
         $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('arrTree', $body);
         $this->assertIsArray($body['arrTree']);
@@ -120,6 +137,7 @@ class PagesControllerTest extends TestCase
     {
         $this->post('/pages/search', ['search' => 'test']);
         $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('results', $body);
     }
@@ -128,6 +146,7 @@ class PagesControllerTest extends TestCase
     {
         $this->post('/pages/search', ['search' => '']);
         $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
         $this->assertArrayHasKey('results', $body);
     }
@@ -136,10 +155,11 @@ class PagesControllerTest extends TestCase
 
     public function testBuildIndexReturnsJson(): void
     {
-        $this->get('/pages/index');
+        $this->post('/pages/index');
         $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
-        $this->assertArrayHasKey('indexes', $body, 'Response should contain indexes');
+        $this->assertArrayHasKey('indexes', $body);
     }
 
     // ── HTTP method enforcement ──
