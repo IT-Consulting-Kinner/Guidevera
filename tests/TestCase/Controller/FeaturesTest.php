@@ -295,9 +295,11 @@ class FeaturesTest extends TestCase
     public function testSetWorkflowStatusRequiresContributor(): void
     {
         $this->session(['Auth' => ['id' => 1, 'role' => 'editor', 'fullname' => 'Test']]);
-        $this->post('/pages/set_workflow', ['id' => 1, 'workflow_status' => 'review']);
+        $this->post('/pages/set_workflow', ['id' => 1, 'workflow_status' => 'published']);
+        $this->assertResponseOk();
+
         $body = json_decode((string)$this->_response->getBody(), true);
-        $this->assertContains($body['error'] ?? '', ['insufficient_permissions', 'not_authenticated']);
+        $this->assertEquals('insufficient_permissions', $body['error'] ?? '');
     }
 
     public function testSetWorkflowStatusValid(): void

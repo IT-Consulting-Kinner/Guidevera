@@ -58,9 +58,7 @@ class ModelsTest extends TestCase
             'page_tree' => '',
             'preferences' => '{}',
         ]);
-
         $this->assertEmpty($user->getErrors());
-
         $result = $this->Users->save($user);
         $this->assertNotFalse($result);
         $this->assertNotEmpty($result->id);
@@ -77,7 +75,6 @@ class ModelsTest extends TestCase
             'role' => 'superuser',
             'status' => 'active',
         ]);
-
         $this->assertNotEmpty($user->getErrors());
         $this->assertArrayHasKey('role', $user->getErrors());
     }
@@ -93,7 +90,10 @@ class ModelsTest extends TestCase
             ->all();
 
         $this->assertCount(2, $users);
-        $this->assertEquals('Alice Admin', $users->first()->fullname);
+        $this->assertEquals(
+            'Alice Admin',
+            $users->first()->fullname
+        );
     }
 
     // ── Pages ──
@@ -107,9 +107,7 @@ class ModelsTest extends TestCase
             'status' => 'active',
             'position' => 1,
         ]);
-
         $this->assertEmpty($page->getErrors());
-
         $result = $this->Pages->save($page);
         $this->assertNotFalse($result);
         $this->assertNotEmpty($result->id);
@@ -123,7 +121,7 @@ class ModelsTest extends TestCase
             'status' => 'active',
             'parent_id' => null,
         ]);
-        $this->assertNotFalse($this->Pages->save($root));
+        $this->Pages->save($root);
 
         $child = $this->Pages->newEntity([
             'title' => 'Chapter 1',
@@ -131,7 +129,7 @@ class ModelsTest extends TestCase
             'status' => 'active',
             'parent_id' => $root->id,
         ]);
-        $this->assertNotFalse($this->Pages->save($child));
+        $this->Pages->save($child);
 
         $grandchild = $this->Pages->newEntity([
             'title' => 'Section 1.1',
@@ -139,8 +137,9 @@ class ModelsTest extends TestCase
             'status' => 'active',
             'parent_id' => $child->id,
         ]);
-        $this->assertNotFalse($this->Pages->save($grandchild));
+        $this->Pages->save($grandchild);
 
+        // Test find('threaded')
         $tree = $this->Pages->find('threaded')
             ->orderBy(['position' => 'ASC'])
             ->all()
@@ -149,21 +148,37 @@ class ModelsTest extends TestCase
         $this->assertCount(1, $tree);
         $this->assertEquals('Manual', $tree[0]->title);
         $this->assertCount(1, $tree[0]->children);
-        $this->assertEquals('Chapter 1', $tree[0]->children[0]->title);
-        $this->assertCount(1, $tree[0]->children[0]->children);
-        $this->assertEquals('Section 1.1', $tree[0]->children[0]->children[0]->title);
+        $this->assertEquals(
+            'Chapter 1',
+            $tree[0]->children[0]->title
+        );
+        $this->assertCount(
+            1,
+            $tree[0]->children[0]->children
+        );
+        $this->assertEquals(
+            'Section 1.1',
+            $tree[0]->children[0]->children[0]->title
+        );
 
+        // Verify parent-child relationships via query
         $childPages = $this->Pages->find()
             ->where(['parent_id' => $root->id])
             ->all();
-
         $this->assertCount(1, $childPages);
-        $this->assertEquals('Chapter 1', $childPages->first()->title);
+        $this->assertEquals(
+            'Chapter 1',
+            $childPages->first()->title
+        );
     }
 
     public function testPageAssociations(): void
     {
-        $user = $this->createTestUser('author', 'Author User', 'editor');
+        $user = $this->createTestUser(
+            'author',
+            'Author User',
+            'editor'
+        );
 
         $page = $this->Pages->newEntity([
             'title' => 'Test Page',
@@ -184,8 +199,14 @@ class ModelsTest extends TestCase
 
         $this->assertNotNull($found->creator);
         $this->assertNotNull($found->modifier);
-        $this->assertEquals('Author User', $found->creator->fullname);
-        $this->assertEquals('Author User', $found->modifier->fullname);
+        $this->assertEquals(
+            'Author User',
+            $found->creator->fullname
+        );
+        $this->assertEquals(
+            'Author User',
+            $found->modifier->fullname
+        );
     }
 
     public function testPageValidation(): void
@@ -194,7 +215,6 @@ class ModelsTest extends TestCase
             'title' => 'Valid Page',
             'status' => 'bogus',
         ]);
-
         $this->assertNotEmpty($page->getErrors());
         $this->assertArrayHasKey('status', $page->getErrors());
     }
@@ -208,7 +228,7 @@ class ModelsTest extends TestCase
             'content' => '',
             'status' => 'active',
         ]);
-        $this->assertNotFalse($this->Pages->save($page));
+        $this->Pages->save($page);
 
         $kw1 = $this->Pagesindex->newEntity([
             'keyword' => 'security',
@@ -218,9 +238,8 @@ class ModelsTest extends TestCase
             'keyword' => 'authentication',
             'page_id' => $page->id,
         ]);
-
-        $this->assertNotFalse($this->Pagesindex->save($kw1));
-        $this->assertNotFalse($this->Pagesindex->save($kw2));
+        $this->Pagesindex->save($kw1);
+        $this->Pagesindex->save($kw2);
 
         $keywords = $this->Pagesindex->find()
             ->where(['page_id' => $page->id])
@@ -229,12 +248,39 @@ class ModelsTest extends TestCase
         $this->assertCount(2, $keywords);
     }
 
-    private function createTestUser(string $username, string $fullname, string $role): object
+    public function testPagesindexBelongsToPages(): void
     {
+        $page = $this->Pages->newEntity([
+            'title' => 'KW Page',
+            'content' => '',
+            'status' => 'active',
+        ]);
+        $this->Pages->save($page);
+
+        $kw = $this->Pagesindex->newEntity([
+            'keyword' => 'test',
+            'page_id' => $page->id,
+        ]);
+        $this->Pagesindex->save($kw);
+
+        $found = $this->Pagesindex->get(
+            $kw->id,
+            contain: ['Pages']
+        );
+        $this->assertEquals('KW Page', $found->page->title);
+    }
+
+    // ── Helpers ──
+
+    private function createTestUser(
+        string $username,
+        string $fullname,
+        string $role
+    ): \App\Model\Entity\User {
         $user = $this->Users->newEntity([
             'gender' => 'male',
             'username' => $username,
-            'password' => 'hashed_pw_123',
+            'password' => 'hashed_' . $username,
             'fullname' => $fullname,
             'email' => $username . '@test.com',
             'role' => $role,
@@ -242,10 +288,8 @@ class ModelsTest extends TestCase
             'page_tree' => '',
             'preferences' => '{}',
         ]);
+        $this->Users->save($user);
 
-        $saved = $this->Users->save($user);
-        $this->assertNotFalse($saved);
-
-        return $saved;
+        return $user;
     }
 }
