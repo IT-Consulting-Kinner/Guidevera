@@ -1,6 +1,5 @@
 const CACHE_NAME = 'manual-v9';
 const STATIC_ASSETS = [
-    '/',
     '/css/app.css',
     '/css/bootstrap.min.css',
     '/css/all.min.css',
