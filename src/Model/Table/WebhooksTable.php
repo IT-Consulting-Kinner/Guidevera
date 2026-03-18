@@ -36,7 +36,11 @@ class WebhooksTable extends Table
                     if ($ip === $host && !filter_var($host, FILTER_VALIDATE_IP)) {
                         return true; // DNS not resolved, allow — runtime will handle
                     }
-                    return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+                    return filter_var(
+                        $ip,
+                        FILTER_VALIDATE_IP,
+                        FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+                    ) !== false;
                 },
                 'message' => 'URL must use HTTPS and not point to private/reserved IP ranges.',
             ]);

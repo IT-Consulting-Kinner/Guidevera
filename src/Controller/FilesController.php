@@ -661,7 +661,11 @@ class FilesController extends AppController
                 if (str_starts_with($field, 'visible_')) {
                     $updates[$field] = (int)(bool)$val;
                 } elseif ($field === 'display_mode') {
-                    $updates[$field] = in_array($val, ['inline', 'attachment', 'download', 'gallery'], true) ? $val : 'inline';
+                    $updates[$field] = in_array(
+                        $val,
+                        ['inline', 'attachment', 'download', 'gallery'],
+                        true
+                    ) ? $val : 'inline';
                 }
             }
         }

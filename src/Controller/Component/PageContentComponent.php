@@ -33,7 +33,11 @@ class PageContentComponent extends Component
         }
 
         // Build title lookup for chapter-numbered display
-        $allPagesOrdered = $Pages->find()->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all()->toArray();
+        $allPagesOrdered = $Pages->find()
+            ->where(['deleted_at IS' => null])
+            ->orderBy(['position' => 'ASC'])
+            ->all()
+            ->toArray();
         $numbered = PagesService::calculateChapterNumbering($allPagesOrdered, $this->getShowNumbering());
         $lookup = PagesService::buildTitleLookup($numbered);
         $hideRoot = PagesService::shouldHideRoot();
@@ -54,7 +58,9 @@ class PageContentComponent extends Component
             $this->applySearchFilters($query, $filters);
             $results = [];
             foreach ($query->all() as $p) {
-                if ($rootId && $p->id == $rootId) continue;
+                if ($rootId && $p->id == $rootId) {
+                    continue;
+                }
                 $results[] = [
                     'id' => $p->id,
                     'title' => $lookup[$p->id] ?? $p->title ?: '(untitled)',
@@ -175,7 +181,9 @@ class PageContentComponent extends Component
 
         $indexes = [];
         foreach ($query->all() as $row) {
-            if ($rootId && $row->page_id == $rootId) continue;
+            if ($rootId && $row->page_id == $rootId) {
+                continue;
+            }
             $kw = $row->keyword;
             if (!isset($indexes[$kw])) {
                 $indexes[$kw] = [];
@@ -234,7 +242,9 @@ class PageContentComponent extends Component
         $result = [];
         foreach ($numbered as $p) {
             $pid = is_object($p) ? $p->id : ($p['id'] ?? 0);
-            if ($rootId && $pid == $rootId) continue;
+            if ($rootId && $pid == $rootId) {
+                continue;
+            }
             if (is_object($p)) {
                 $p->content = PagesService::sanitizeHtml($p->content ?? '');
             }

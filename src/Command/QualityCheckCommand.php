@@ -213,11 +213,21 @@ class QualityCheckCommand extends Command
                 foreach ($issues as $data) {
                     $issueCount += count($data['issues']);
                     foreach ($data['issues'] as $i) {
-                        if (str_contains($i, 'Not updated')) $stale++;
-                        if (str_contains($i, 'No description')) $noDesc++;
-                        if (str_contains($i, 'empty or very short')) $empty++;
-                        if (str_contains($i, 'No keywords')) $noKeywords++;
-                        if (str_contains($i, 'No tags')) $noTags++;
+                        if (str_contains($i, 'Not updated')) {
+                            $stale++;
+                        }
+                        if (str_contains($i, 'No description')) {
+                            $noDesc++;
+                        }
+                        if (str_contains($i, 'empty or very short')) {
+                            $empty++;
+                        }
+                        if (str_contains($i, 'No keywords')) {
+                            $noKeywords++;
+                        }
+                        if (str_contains($i, 'No tags')) {
+                            $noTags++;
+                        }
                     }
                 }
 

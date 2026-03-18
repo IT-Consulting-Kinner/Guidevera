@@ -19,12 +19,18 @@ return function (RouteBuilder $routes): void {
 
         // Pages: Core AJAX (write operations — POST only)
         $b->connect('/pages/save', ['controller' => 'Pages', 'action' => 'save'])->setMethods(['POST']);
-        $b->connect('/pages/save_content_silent', ['controller' => 'Pages', 'action' => 'saveContentSilent'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/save_content_silent',
+            ['controller' => 'Pages', 'action' => 'saveContentSilent']
+        )->setMethods(['POST']);
         $b->connect('/pages/create', ['controller' => 'Pages', 'action' => 'create'])->setMethods(['POST']);
         $b->connect('/pages/delete', ['controller' => 'Pages', 'action' => 'delete'])->setMethods(['POST']);
         $b->connect('/pages/set_status', ['controller' => 'Pages', 'action' => 'setStatus'])->setMethods(['POST']);
         $b->connect('/pages/update_order', ['controller' => 'Pages', 'action' => 'updateOrder'])->setMethods(['POST']);
-        $b->connect('/pages/update_parent', ['controller' => 'Pages', 'action' => 'updateParent'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/update_parent',
+            ['controller' => 'Pages', 'action' => 'updateParent']
+        )->setMethods(['POST']);
         $b->connect('/pages/index', ['controller' => 'Pages', 'action' => 'buildIndex'])->setMethods(['POST']);
         $b->connect('/pages/upload_media', ['controller' => 'Pages', 'action' => 'uploadMedia'])->setMethods(['POST']);
 
@@ -36,7 +42,10 @@ return function (RouteBuilder $routes): void {
         // Pages: Dashboard, Trash, Export, Stats, Audit
         $b->connect('/pages/dashboard', ['controller' => 'Pages', 'action' => 'dashboard']);
         $b->connect('/pages/trash', ['controller' => 'Pages', 'action' => 'trash']);
-        $b->connect('/pages/trash_restore', ['controller' => 'Pages', 'action' => 'trashRestore'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/trash_restore',
+            ['controller' => 'Pages', 'action' => 'trashRestore']
+        )->setMethods(['POST']);
         $b->connect('/pages/trash_purge', ['controller' => 'Pages', 'action' => 'trashPurge'])->setMethods(['POST']);
         $b->connect('/pages/export_md', ['controller' => 'Pages', 'action' => 'exportMarkdown'])->setMethods(['POST']);
         $b->connect('/pages/export_pdf', ['controller' => 'Pages', 'action' => 'exportPdf'])->setMethods(['POST']);
@@ -44,7 +53,10 @@ return function (RouteBuilder $routes): void {
         $b->connect('/pages/audit_log', ['controller' => 'Pages', 'action' => 'auditLog']);
 
         // v10: Workflow, Tags, Quality
-        $b->connect('/pages/set_workflow', ['controller' => 'Pages', 'action' => 'setWorkflowStatus'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/set_workflow',
+            ['controller' => 'Pages', 'action' => 'setWorkflowStatus']
+        )->setMethods(['POST']);
         $b->connect('/pages/review_queue', ['controller' => 'Pages', 'action' => 'reviewQueue']);
         $b->connect('/pages/tags', ['controller' => 'Pages', 'action' => 'tags']);
         $b->connect('/pages/save_tags', ['controller' => 'Pages', 'action' => 'saveTags'])->setMethods(['POST']);
@@ -58,15 +70,27 @@ return function (RouteBuilder $routes): void {
         $b->connect('/pages/ack_status', ['controller' => 'Pages', 'action' => 'ackStatus']);
         $b->connect('/pages/ack_report', ['controller' => 'Pages', 'action' => 'ackReport']);
         $b->connect('/pages/inline_comments', ['controller' => 'Pages', 'action' => 'inlineComments']);
-        $b->connect('/pages/add_inline_comment', ['controller' => 'Pages', 'action' => 'addInlineComment'])->setMethods(['POST']);
-        $b->connect('/pages/resolve_inline_comment', ['controller' => 'Pages', 'action' => 'resolveInlineComment'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/add_inline_comment',
+            ['controller' => 'Pages', 'action' => 'addInlineComment']
+        )->setMethods(['POST']);
+        $b->connect(
+            '/pages/resolve_inline_comment',
+            ['controller' => 'Pages', 'action' => 'resolveInlineComment']
+        )->setMethods(['POST']);
         $b->connect('/pages/analytics', ['controller' => 'Pages', 'action' => 'analytics']);
         $b->connect('/pages/import', ['controller' => 'Pages', 'action' => 'import'])->setMethods(['POST']);
         $b->connect('/pages/link_suggest', ['controller' => 'Pages', 'action' => 'linkSuggest']);
         $b->connect('/pages/stale_list', ['controller' => 'Pages', 'action' => 'staleList']);
         $b->connect('/pages/translation_status', ['controller' => 'Pages', 'action' => 'translationStatus']);
-        $b->connect('/pages/assign_reviewer', ['controller' => 'Pages', 'action' => 'assignReviewer'])->setMethods(['POST']);
-        $b->connect('/pages/review_decision', ['controller' => 'Pages', 'action' => 'reviewDecision'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/assign_reviewer',
+            ['controller' => 'Pages', 'action' => 'assignReviewer']
+        )->setMethods(['POST']);
+        $b->connect(
+            '/pages/review_decision',
+            ['controller' => 'Pages', 'action' => 'reviewDecision']
+        )->setMethods(['POST']);
         $b->connect('/pages/page_reviews', ['controller' => 'Pages', 'action' => 'pageReviews']);
 
         // Media Library
@@ -76,11 +100,17 @@ return function (RouteBuilder $routes): void {
         // Revisions
         $b->connect('/pages/revisions', ['controller' => 'Revisions', 'action' => 'index']);
         $b->connect('/pages/revision_show', ['controller' => 'Revisions', 'action' => 'show']);
-        $b->connect('/pages/revision_restore', ['controller' => 'Revisions', 'action' => 'restore'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/revision_restore',
+            ['controller' => 'Revisions', 'action' => 'restore']
+        )->setMethods(['POST']);
 
         // Feedback
         $b->connect('/pages/feedback', ['controller' => 'Feedback', 'action' => 'submit'])->setMethods(['POST']);
-        $b->connect('/pages/feedback_moderate', ['controller' => 'Feedback', 'action' => 'moderate'])->setMethods(['POST']);
+        $b->connect(
+            '/pages/feedback_moderate',
+            ['controller' => 'Feedback', 'action' => 'moderate']
+        )->setMethods(['POST']);
         $b->connect('/pages/feedback_list', ['controller' => 'Feedback', 'action' => 'pending']);
 
         // Comments
@@ -113,7 +143,10 @@ return function (RouteBuilder $routes): void {
         $b->connect('/user/relogin', ['controller' => 'Users', 'action' => 'relogin'])->setMethods(['POST']);
         $b->connect('/user/profil', ['controller' => 'Users', 'action' => 'profil']);
         $b->connect('/user/change-password', ['controller' => 'Users', 'action' => 'changePassword']);
-        $b->connect('/user/save_page_tree', ['controller' => 'Users', 'action' => 'savePageTree'])->setMethods(['POST']);
+        $b->connect(
+            '/user/save_page_tree',
+            ['controller' => 'Users', 'action' => 'savePageTree']
+        )->setMethods(['POST']);
         $b->connect('/user/search_users', ['controller' => 'Users', 'action' => 'searchUsers']);
         $b->connect('/user/save', ['controller' => 'Users', 'action' => 'save'])->setMethods(['POST']);
         $b->connect('/user/delete', ['controller' => 'Users', 'action' => 'deleteUser'])->setMethods(['POST']);

@@ -220,7 +220,10 @@ class PagesController extends AppController
             $page->keywords = PagesService::loadKeywords($id);
             // Atomic increment — only for anonymous visitors
             if (!$this->isLoggedIn()) {
-                $this->Pages->getConnection()->execute('UPDATE pages SET views = views + 1 WHERE id = ? AND deleted_at IS NULL', [$id]);
+                $this->Pages->getConnection()->execute(
+                    'UPDATE pages SET views = views + 1 WHERE id = ? AND deleted_at IS NULL',
+                    [$id]
+                );
             }
             $page = $this->applyTranslation($page, $locale);
 
@@ -247,7 +250,9 @@ class PagesController extends AppController
                     ])->count() > 0,
                     'comments' => $fb->find()->where(['page_id' => $id, 'status' => 'approved'])
                         ->orderBy(['created' => 'DESC'])->limit(10)->all()->map(fn($f) => [
-                            'rating' => $f->rating, 'comment' => $f->comment ?? '', 'created' => $f->created->format('d.m.Y'),
+                            'rating' => $f->rating,
+                            'comment' => $f->comment ?? '',
+                            'created' => $f->created->format('d.m.Y'),
                         ])->toArray(),
                 ];
             }
@@ -262,7 +267,7 @@ class PagesController extends AppController
                 'modifiedBy' => $page->modifier?->fullname ?? '',
                 'feedback' => $feedback, 'locale' => $locale,
                 'breadcrumbs' => (Configure::read('Manual.enableBreadcrumbs') ?? true) ?
-                    (function() use ($id, $numbered) {
+                    (function () use ($id, $numbered) {
                         $crumbs = PagesService::buildBreadcrumbs($id, $numbered);
                         if (!(Configure::read('Manual.showNavigationRoot') ?? true) && count($crumbs) > 1) {
                             array_shift($crumbs);
@@ -759,8 +764,12 @@ class PagesController extends AppController
         $filtered = [];
         $rootId = 0;
         foreach ($pages as $i => $p) {
-            if ($i === 0) $rootId = $p->id;
-            if (!$showRoot && $p->id === $rootId) continue;
+            if ($i === 0) {
+                $rootId = $p->id;
+            }
+            if (!$showRoot && $p->id === $rootId) {
+                continue;
+            }
             $filtered[] = $p;
         }
         $this->set('pages', $filtered);
@@ -812,7 +821,9 @@ class PagesController extends AppController
             ->orderBy(['modified' => 'DESC'])->limit(10)->all()->toArray();
         $recentlyCreated = $this->Pages->find()
             ->where(['deleted_at IS' => null])->orderBy(['created' => 'DESC'])->limit(10)->all()->toArray();
-        $trashCount = $this->Pages->find(withDeleted: true)->where([$this->Pages->getAlias() . '.deleted_at IS NOT' => null])->count();
+        $trashCount = $this->Pages->find(withDeleted: true)
+            ->where([$this->Pages->getAlias() . '.deleted_at IS NOT' => null])
+            ->count();
         $totalPages = $this->Pages->find()->where(['deleted_at IS' => null])->count();
         $pendingFeedback = 0;
         if ($this->hasRole(self::ROLE_ADMIN) && (Configure::read('Manual.enableFeedback') ?? false)) {
@@ -821,7 +832,11 @@ class PagesController extends AppController
 
         // Quality metrics — exclude root page when showNavigationRoot is false
         $hideRoot = \App\Service\PagesService::shouldHideRoot();
-        $allPagesOrdered = $this->Pages->find()->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all()->toArray();
+        $allPagesOrdered = $this->Pages->find()
+            ->where(['deleted_at IS' => null])
+            ->orderBy(['position' => 'ASC'])
+            ->all()
+            ->toArray();
         $rootPageId = $hideRoot ? \App\Service\PagesService::getRootPageId($allPagesOrdered) : 0;
         $rootExclude = $rootPageId ? ['id !=' => $rootPageId] : [];
 
@@ -829,8 +844,12 @@ class PagesController extends AppController
         $stalePages = $this->Pages->find()->where(array_merge(['deleted_at IS' => null, 'modified <' =>
             new \Cake\I18n\DateTime("-{$staleMonths} months")], $rootExclude))
             ->count();
-        $noDescriptionPages = $this->Pages->find()->select(['id', 'title'])->where(array_merge(['deleted_at IS' => null, 'OR' => ['description IS' =>
-            null, 'description' => '']], $rootExclude))
+        $noDescriptionPages = $this->Pages->find()
+            ->select(['id', 'title'])
+            ->where(array_merge([
+                'deleted_at IS' => null,
+                'OR' => ['description IS' => null, 'description' => ''],
+            ], $rootExclude))
             ->orderBy(['position' => 'ASC'])->limit(20)->all()->toArray();
         $noDescription = count($noDescriptionPages);
         $reviewQueue = $this->Pages->find()->where(['deleted_at IS' => null, 'workflow_status' => 'review'])->count();
@@ -926,9 +945,14 @@ class PagesController extends AppController
             )->fetchAll('assoc');
             foreach ($fbRows as $r) {
                 $pid = (int)$r['page_id'];
-                if (!isset($feedbackMap[$pid])) $feedbackMap[$pid] = ['up' => 0, 'down' => 0];
-                if ((int)$r['rating'] === 1) $feedbackMap[$pid]['up'] = (int)$r['cnt'];
-                elseif ((int)$r['rating'] === -1) $feedbackMap[$pid]['down'] = (int)$r['cnt'];
+                if (!isset($feedbackMap[$pid])) {
+                    $feedbackMap[$pid] = ['up' => 0, 'down' => 0];
+                }
+                if ((int)$r['rating'] === 1) {
+                    $feedbackMap[$pid]['up'] = (int)$r['cnt'];
+                } elseif ((int)$r['rating'] === -1) {
+                    $feedbackMap[$pid]['down'] = (int)$r['cnt'];
+                }
             }
         }
 
@@ -976,8 +1000,18 @@ class PagesController extends AppController
             'defaultLocale' => Configure::read('Manual.defaultLocale') ?? 'en',
             'showNavigationRoot' => Configure::read('Manual.showNavigationRoot') ?? true,
         ];
-        $this->set(compact('allOverview', 'keywordsMap', 'tagsMap', 'translationsMap',
-            'feedbackMap', 'subsMap', 'ackMap', 'commentMap', 'overviewConfig', 'rootPageId'));
+        $this->set(compact(
+            'allOverview',
+            'keywordsMap',
+            'tagsMap',
+            'translationsMap',
+            'feedbackMap',
+            'subsMap',
+            'ackMap',
+            'commentMap',
+            'overviewConfig',
+            'rootPageId'
+        ));
     }
 
     // ── Trash ──
@@ -1008,7 +1042,9 @@ class PagesController extends AppController
         if (!$id) {
             return $this->jsonError('invalid_id');
         }
-        $page = $this->Pages->find(withDeleted: true)->where(['id' => $id, $this->Pages->getAlias() . '.deleted_at IS NOT' => null])->first();
+        $page = $this->Pages->find(withDeleted: true)
+            ->where(['id' => $id, $this->Pages->getAlias() . '.deleted_at IS NOT' => null])
+            ->first();
         if (!$page) {
             return $this->jsonError('not_found');
         }
@@ -1047,7 +1083,9 @@ class PagesController extends AppController
         $id = (int)$this->request->getData('id', 0);
         if ($id) {
             // Purge single item + all related data
-            $page = $this->Pages->find(withDeleted: true)->where(['id' => $id, $this->Pages->getAlias() . '.deleted_at IS NOT' => null])->first();
+            $page = $this->Pages->find(withDeleted: true)
+            ->where(['id' => $id, $this->Pages->getAlias() . '.deleted_at IS NOT' => null])
+            ->first();
             if ($page) {
                 $this->purgePageData($id);
                 $this->Pages->delete($page);
@@ -1057,7 +1095,9 @@ class PagesController extends AppController
             // Purge all expired trash
             $days = Configure::read('Manual.trashRetentionDays') ?? 30;
             $cutoff = new \Cake\I18n\DateTime("-{$days} days");
-            $expired = $this->Pages->find(withDeleted: true)->where([$this->Pages->getAlias() . '.deleted_at <' => $cutoff])->all();
+            $expired = $this->Pages->find(withDeleted: true)
+                ->where([$this->Pages->getAlias() . '.deleted_at <' => $cutoff])
+                ->all();
             foreach ($expired as $p) {
                 $this->purgePageData($p->id);
                 $this->Pages->delete($p);
@@ -1454,12 +1494,18 @@ class PagesController extends AppController
         if (!$data) {
             // Generate on-the-fly if no cached results
             $hideRoot = \App\Service\PagesService::shouldHideRoot();
-            $allPages = $this->Pages->find()->where(['deleted_at IS' => null])->orderBy(['position' => 'ASC'])->all()->toArray();
+            $allPages = $this->Pages->find()
+                ->where(['deleted_at IS' => null])
+                ->orderBy(['position' => 'ASC'])
+                ->all()
+                ->toArray();
             $rootPageId = $hideRoot ? \App\Service\PagesService::getRootPageId($allPages) : 0;
             $stale = $noDesc = $empty = 0;
             $staleMonths = Configure::read('Manual.staleContentMonths') ?? 12;
             foreach ($allPages as $p) {
-                if ($rootPageId && $p->id === $rootPageId) continue;
+                if ($rootPageId && $p->id === $rootPageId) {
+                    continue;
+                }
                 if (empty(trim($p->description ?? ''))) {
                     $noDesc++;
                 }
@@ -1574,9 +1620,16 @@ class PagesController extends AppController
         $acked = false;
         if ($this->isLoggedIn()) {
             $acked = $this->fetchTable('PageAcknowledgements')->find()
-                ->where(['page_id' => $pageId, 'user_id' => $this->currentUser()['id'] ?? 0, 'locale' => $locale])->count() > 0;
+                ->where([
+                    'page_id' => $pageId,
+                    'user_id' => $this->currentUser()['id'] ?? 0,
+                    'locale' => $locale,
+                ])
+                ->count() > 0;
         }
-        $total = $this->fetchTable('PageAcknowledgements')->find()->where(['page_id' => $pageId, 'locale' => $locale])->count();
+        $total = $this->fetchTable('PageAcknowledgements')->find()
+            ->where(['page_id' => $pageId, 'locale' => $locale])
+            ->count();
         return $this->jsonSuccess(['acknowledged' => $acked, 'totalAcks' => $total]);
     }
 
@@ -1916,7 +1969,12 @@ class PagesController extends AppController
             }
 
             if (!empty($missing) || !empty($staleLocales)) {
-                $result[] = ['id' => $p->id, 'title' => $p->title ?? '', 'missing' => $missing, 'stale' => $staleLocales];
+                $result[] = [
+                    'id' => $p->id,
+                    'title' => $p->title ?? '',
+                    'missing' => $missing,
+                    'stale' => $staleLocales,
+                ];
             }
         }
         return $this->jsonSuccess(['translationStatus' => $result, 'locales' => $locales]);

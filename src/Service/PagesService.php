@@ -439,8 +439,12 @@ class PagesService
         foreach ($pages as $p) {
             $s = is_array($p) ? $p['status'] : $p->status;
             $pid = (int)(is_array($p) ? $p['id'] : $p->id);
-            if ($s !== 'active') continue;
-            if ($rootId && $pid === $rootId) continue;
+            if ($s !== 'active') {
+                continue;
+            }
+            if ($rootId && $pid === $rootId) {
+                continue;
+            }
             $active[] = $p;
         }
         if (empty($active)) {
@@ -617,7 +621,9 @@ class PagesService
      */
     public static function getRootPageId(array $pages): int
     {
-        if (empty($pages)) return 0;
+        if (empty($pages)) {
+            return 0;
+        }
         $first = $pages[0];
         return (int)(is_array($first) ? ($first['id'] ?? 0) : ($first->id ?? 0));
     }

@@ -96,7 +96,11 @@ class PagesTable extends Table
      * Automatically exclude soft-deleted records from all queries.
      * Pass 'withDeleted' => true in finder options to include deleted records.
      */
-    public function beforeFind(\Cake\Event\EventInterface $event, \Cake\ORM\Query\SelectQuery $query, \ArrayObject $options): void
+    public function beforeFind(
+        \Cake\Event\EventInterface $event,
+        \Cake\ORM\Query\SelectQuery $query,
+        \ArrayObject $options
+    ): void
     {
         if (empty($options['withDeleted'])) {
             $query->where([$this->getAlias() . '.deleted_at IS' => null]);
