@@ -1,0 +1,36 @@
+# Normalise line endings so a checkout is identical on every platform.
+#
+# Without this file, Windows clones with the common `core.autocrlf=true`
+# produce a CRLF working copy while the repository content is LF. PHP_CodeSniffer
+# then reports Generic.Files.LineEndings for every file and `composer cs-check`
+# fails locally, even though the Linux CI is green.
+
+* text=auto eol=lf
+
+# Files that must keep platform-specific endings.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.sh            text eol=lf
+bin/cake        text eol=lf
+
+# Binary assets — never convert.
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.webp          binary
+*.ico           binary
+*.pdf           binary
+*.zip           binary
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.otf           binary
+*.eot           binary
+
+# Keep the distribution archive small — these never ship.
+/.github        export-ignore
+/tests          export-ignore
+/docs           export-ignore
+/.gitattributes export-ignore
+/.gitignore     export-ignore
