@@ -635,4 +635,63 @@ class PagesService
     {
         return !(Configure::read('Manual.showNavigationRoot') ?? true);
     }
+
+    // ── Trash ──
+
+    /**
+     * Remove every row that belongs to a page, for permanent deletion.
+     *
+     * Called before deleting the page itself so no orphaned revisions,
+     * comments, acknowledgements or tags are left behind.
+     */
+    public static function purgePageData(int $pageId): void
+    {
+        $tables = [
+            'Pagesindex', 'PageTranslations', 'PageRevisions', 'PageComments',
+            'PageFeedback', 'PageAcknowledgements', 'PageSubscriptions',
+            'PageTags', 'PageReviews', 'InlineComments',
+        ];
+        foreach ($tables as $table) {
+            try {
+                FactoryLocator::get('Table')->get($table)->deleteAll(['page_id' => $pageId]);
+            } catch (\Exception $e) {
+                // Table might not exist — skip
+            }
+        }
+    }
+
+    /**
+     * Permanently delete soft-deleted pages whose retention period has expired.
+     *
+     * Shared by PagesController::trashPurge() (manual, admin-triggered) and
+     * QualityCheckCommand (nightly cron), so the documented auto-purge actually
+     * runs without an administrator pressing a button.
+     *
+     * @param int|null $days Retention period; defaults to Manual.trashRetentionDays.
+     * @return int Number of pages purged.
+     */
+    public static function purgeExpiredTrash(?int $days = null): int
+    {
+        $days = $days ?? (int)(Configure::read('Manual.trashRetentionDays') ?? 30);
+        $pages = FactoryLocator::get('Table')->get('Pages');
+        $cutoff = new \Cake\I18n\DateTime("-{$days} days");
+
+        // deleted_at < cutoff never matches NULL, so live pages are excluded.
+        $expired = $pages->find(withDeleted: true)
+            ->where([$pages->getAlias() . '.deleted_at <' => $cutoff])
+            ->all();
+
+        $purged = 0;
+        foreach ($expired as $page) {
+            self::purgePageData($page->id);
+            $pages->delete($page);
+            $purged++;
+        }
+
+        if ($purged > 0) {
+            self::invalidateCache();
+        }
+
+        return $purged;
+    }
 }

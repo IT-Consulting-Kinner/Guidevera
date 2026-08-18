@@ -1087,44 +1087,18 @@ class PagesController extends AppController
             ->where(['id' => $id, $this->Pages->getAlias() . '.deleted_at IS NOT' => null])
             ->first();
             if ($page) {
-                $this->purgePageData($id);
+                PagesService::purgePageData($id);
                 $this->Pages->delete($page);
                 $this->audit('page_purge', 'page', $id, 'Permanently deleted');
             }
         } else {
-            // Purge all expired trash
-            $days = Configure::read('Manual.trashRetentionDays') ?? 30;
-            $cutoff = new \Cake\I18n\DateTime("-{$days} days");
-            $expired = $this->Pages->find(withDeleted: true)
-                ->where([$this->Pages->getAlias() . '.deleted_at <' => $cutoff])
-                ->all();
-            foreach ($expired as $p) {
-                $this->purgePageData($p->id);
-                $this->Pages->delete($p);
-            }
-            $this->audit('trash_purge', 'system', 0, "Purged items older than {$days} days");
+            // Purge all expired trash — the same routine the nightly cron runs.
+            $days = (int)(Configure::read('Manual.trashRetentionDays') ?? 30);
+            $purged = PagesService::purgeExpiredTrash($days);
+            $this->audit('trash_purge', 'system', 0, "Purged {$purged} items older than {$days} days");
         }
         PagesService::invalidateCache();
         return $this->jsonSuccess(['success' => true]);
-    }
-
-    /**
-     * Remove all data associated with a page (for permanent deletion).
-     */
-    private function purgePageData(int $pageId): void
-    {
-        $tables = [
-            'Pagesindex', 'PageTranslations', 'PageRevisions', 'PageComments',
-            'PageFeedback', 'PageAcknowledgements', 'PageSubscriptions',
-            'PageTags', 'PageReviews', 'InlineComments',
-        ];
-        foreach ($tables as $table) {
-            try {
-                $this->fetchTable($table)->deleteAll(['page_id' => $pageId]);
-            } catch (\Exception $e) {
-                // Table might not exist — skip
-            }
-        }
     }
 
     // ── Exports ──

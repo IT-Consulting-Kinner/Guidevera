@@ -10,11 +10,15 @@ use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 
 /**
- * Quality Check Command — content quality analysis.
+ * Quality Check Command — nightly maintenance.
  *
- * Checks: missing descriptions, missing keywords, missing tags (if enableSmartLinks),
- * stale content, broken internal links, orphaned media, heading structure issues.
- * Results can be viewed in the admin dashboard via /pages/stats.
+ * Two jobs:
+ * 1. Purges trashed pages past `Manual.trashRetentionDays`, together with their
+ *    revisions, comments, acknowledgements and tags.
+ * 2. Checks content quality: missing descriptions, missing keywords, missing tags
+ *    (if enableSmartLinks), stale content, broken internal links, orphaned media,
+ *    heading structure issues. Results are viewable in the admin dashboard via
+ *    /pages/stats.
  *
  * Usage: bin/cake quality-check
  */
@@ -35,6 +39,17 @@ class QualityCheckCommand extends Command
     {
         $io->out('<info>Content Quality Check</info>');
         $io->out(str_repeat('─', 50));
+
+        // Purge expired trash first. README, docs/architecture.md and docs/security.md
+        // all promise this happens nightly; until now only the admin UI ever purged.
+        $retention = (int)(\Cake\Core\Configure::read('Manual.trashRetentionDays') ?? 30);
+        $purged = \App\Service\PagesService::purgeExpiredTrash($retention);
+        if ($purged > 0) {
+            $io->success("Trash: {$purged} page(s) past the {$retention}-day retention permanently deleted.");
+        } else {
+            $io->out("Trash: nothing past the {$retention}-day retention.");
+        }
+        $io->out('');
 
         $showRoot = \Cake\Core\Configure::read('Manual.showNavigationRoot') ?? true;
         $enableSmartLinks = \Cake\Core\Configure::read('Manual.enableSmartLinks') ?? false;
