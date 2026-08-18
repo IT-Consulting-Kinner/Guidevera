@@ -278,6 +278,97 @@ class FeaturesTest extends TestCase
         $this->assertContains($body['searchMode'] ?? '', ['fulltext', 'like']);
     }
 
+    // ── Search: non-ASCII terms ──
+
+    public function testSearchKeepsUmlauts(): void
+    {
+        $pages = $this->fetchTable('Pages');
+        $page = $pages->newEntity([
+            'parent_id' => 1,
+            'position' => 99,
+            'title' => 'Größenübersicht',
+            'description' => 'Maße und Gewichte',
+            'content' => '<p>Prüfung der Maße</p>',
+        ]);
+        $page->set('status', 'active');
+        $page->set('created_by', 1);
+        $page->set('modified_by', 1);
+        $this->assertNotFalse($pages->save($page), 'Fixture page could not be saved');
+
+        $this->post('/pages/search', ['search' => 'Größenübersicht']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+        $titles = array_column($body['results'] ?? [], 'title');
+
+        $found = false;
+        foreach ($titles as $title) {
+            if (str_contains($title, 'Größenübersicht')) {
+                $found = true;
+                break;
+            }
+        }
+
+        $this->assertTrue(
+            $found,
+            'Umlauts must survive the search filter. Got: ' . json_encode($titles)
+        );
+    }
+
+    public function testSearchStripsFulltextOperators(): void
+    {
+        $this->post('/pages/search', ['search' => '+test* -(foo)']);
+        $body = json_decode((string)$this->_response->getBody(), true);
+
+        $this->assertContains(
+            $body['searchMode'] ?? '',
+            ['fulltext', 'like'],
+            'Operator characters must not break the query'
+        );
+    }
+
+    // ── Trash auto-purge ──
+
+    public function testPurgeExpiredTrashRemovesOnlyExpiredPages(): void
+    {
+        $pages = $this->fetchTable('Pages');
+        $pages->updateAll(['deleted_at' => new \Cake\I18n\DateTime('-60 days')], ['id' => 3]);
+        $pages->updateAll(['deleted_at' => new \Cake\I18n\DateTime('-1 day')], ['id' => 2]);
+
+        $purged = \App\Service\PagesService::purgeExpiredTrash(30);
+
+        $this->assertSame(1, $purged, 'Exactly one page is past the retention period');
+        $this->assertSame(
+            0,
+            $pages->find(withDeleted: true)->where(['Pages.id' => 3])->count(),
+            'Page trashed 60 days ago must be gone'
+        );
+        $this->assertSame(
+            1,
+            $pages->find(withDeleted: true)->where(['Pages.id' => 2])->count(),
+            'Page trashed yesterday must survive'
+        );
+    }
+
+    public function testPurgeExpiredTrashKeepsLivePages(): void
+    {
+        $pages = $this->fetchTable('Pages');
+
+        $purged = \App\Service\PagesService::purgeExpiredTrash(30);
+
+        $this->assertSame(0, $purged, 'Nothing is in the trash');
+        $this->assertSame(3, $pages->find(withDeleted: true)->count(), 'Live pages must be untouched');
+    }
+
+    public function testPurgePageDataRemovesRevisions(): void
+    {
+        $revisions = $this->fetchTable('PageRevisions');
+        $before = $revisions->find()->where(['page_id' => 1])->count();
+        $this->assertGreaterThan(0, $before, 'Fixture must provide revisions for page 1');
+
+        \App\Service\PagesService::purgePageData(1);
+
+        $this->assertSame(0, $revisions->find()->where(['page_id' => 1])->count());
+    }
+
     // ── Cache Invalidation ──
 
     public function testCacheInvalidatedOnCreate(): void
