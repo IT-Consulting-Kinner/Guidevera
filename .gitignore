@@ -87,12 +87,14 @@ artifacts/
 
 # ------------------------------------------------------------
 # Environment / local configuration
-# Keep config/app_local.php in repo if you ship a safe template
+# Local configuration — never commit: contains DB credentials and Security.salt.
+# Ship config/app_local.example.php as the template instead.
 # ------------------------------------------------------------
 .env
 .env.*
 !.env.example
 
+config/app_local.php
 config/app_local_*.php
 config/.env
 
