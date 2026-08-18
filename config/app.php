@@ -504,6 +504,12 @@ return [
         'defaultLocale' => 'en',
         // Notifications (empty = disabled)
         'notifyEmail' => '',
+        // Reverse proxy: IP addresses whose X-Forwarded-For header may be trusted
+        // when rate limiting login attempts. Leave empty when clients reach the
+        // application directly. Behind nginx/Traefik/HAProxy this must list the
+        // proxy — otherwise every request appears to come from the proxy address
+        // and one user's failed logins lock out everybody else.
+        'trustedProxies' => [],
         // Features
         'enablePrint' => false,
         'enableFeedback' => false,

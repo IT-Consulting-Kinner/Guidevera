@@ -106,3 +106,26 @@ Configure in `config/app_local.php`:
 ```
 
 Must be set in `app_local.php`. Each installation needs a unique salt.
+
+### Reverse Proxy
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `trustedProxies` | array | `[]` | IPs whose `X-Forwarded-For` header may be trusted |
+
+Login rate limiting counts failed attempts per client IP. When the application sits
+behind nginx, Traefik, HAProxy or a load balancer, every request arrives from the
+proxy — so without this setting one user's failed logins lock out **everyone**.
+
+List the proxy addresses in `config/app.php`:
+
+```php
+'Manual' => [
+    'trustedProxies' => ['10.0.0.1', '192.168.1.10'],
+],
+```
+
+Only for these source addresses is `X-Forwarded-For` used to determine the client
+IP; for every other source the direct connection address counts. Leave the array
+empty when clients reach the application directly — listing a proxy that does not
+overwrite `X-Forwarded-For` lets a client spoof its own IP and bypass the limit.

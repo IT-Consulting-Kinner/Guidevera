@@ -149,11 +149,16 @@ All settings are in `config/app.php` under the `Manual` key. Example:
     'maxUploadSize' => 10485760,
     'staleContentMonths' => 12,
     'trashRetentionDays' => 30,
+    'trustedProxies' => [],
     'showNavigationRoot' => false,
     'useLogo' => false,
     'logoPath' => '/img/logo.webp',
 ],
 ```
+
+**Behind a reverse proxy:** set `trustedProxies` to the proxy IPs, otherwise login
+rate limiting sees every request as coming from the proxy and one user's failed
+attempts lock out everyone. See `docs/configuration.md`.
 
 See `docs/configuration.md` for the full reference of all 40+ settings.
 
