@@ -26,8 +26,11 @@ class PageContentComponent extends Component
     public function searchPages(string $search, bool $isLoggedIn, array $filters = []): array
     {
         $Pages = $this->getController()->fetchTable('Pages');
-        $clean = preg_replace('/[^\da-z ]/i', '', $search);
-        $words = array_filter(explode(' ', $clean));
+        // Strip only what MySQL would read as a FULLTEXT boolean operator, and keep
+        // letters and digits of every script. An ASCII-only filter silently turned
+        // "Übersicht" into "bersicht" and made most German content unfindable.
+        $clean = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $search) ?? '';
+        $words = array_filter(explode(' ', trim($clean)));
         if (empty($words)) {
             return ['results' => [], 'search' => $search];
         }
